@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="glow-text mb-3">EVENTS & WORKSHOPS</h1>
+            <p class="lead text-cyan">Explore our workshops, competitions, and tech events</p>
+        </div>
+    </div>
+
+    <!-- Event Filters -->
+    <div class="cyber-card p-4 mb-5">
+        <div class="row g-3">
+            <!-- Search Bar -->
+            <div class="col-md-6">
+                <form method="GET" class="d-flex">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-cyan">
+                            <i class="bi bi-search text-cyan"></i>
+                        </span>
+                        <input type="text" 
+                               name="search" 
+                               class="form-control bg-dark text-light border-cyan" 
+                               placeholder="Search events..."
+                               value="{{ search_query }}">
+                        <button class="btn btn-cyber" type="submit">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="col-md-6">
+                <div class="btn-group w-100" role="group">
+                    <a href="?status=all{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="btn btn-outline-cyber {% if status_filter == 'all' %}active{% endif %}">
+                        All Events ({{ events.count }})
+                    </a>
+                    <a href="?status=Upcoming{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="btn btn-outline-cyber {% if status_filter == 'Upcoming' %}active{% endif %}">
+                        Upcoming ({{ upcoming_count }})
+                    </a>
+                    <a href="?status=Ongoing{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="btn btn-outline-cyber {% if status_filter == 'Ongoing' %}active{% endif %}">
+                        Ongoing ({{ ongoing_count }})
+                    </a>
+                    <a href="?status=Completed{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="btn btn-outline-cyber {% if status_filter == 'Completed' %}active{% endif %}">
+                        Completed ({{ completed_count }})
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Countdown Section -->
+    {% if upcoming_events %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="timer-section">
+                <h3 class="text-center mb-4">
+                    <i class="bi bi-clock-history text-cyan me-2"></i>
+                    NEXT MAJOR EVENT
+                </h3>
+                
+                {% with upcoming_events.first as next_event %}
+                <div class="text-center mb-4">
+                    <h4 class="glow-text">{{ next_event.title }}</h4>
+                    <p class="text-muted">
+                        <i class="bi bi-calendar me-1"></i>
+                        {{ next_event.date|date:"F d, Y - h:i A" }}
+                        <i class="bi bi-geo-alt ms-3 me-1"></i>
+                        {{ next_event.location }}
+                    </p>
+                </div>
+                
+                <div class="timer-display countdown" data-end="{{ next_event.date|date:'Y-m-d H:i:s' }}">
+                    Loading...
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="{% url 'event_detail' next_event.id %}" class="btn btn-cyber me-2">
+                        <i class="bi bi-info-circle me-2"></i>Event Details
+                    </a>
+                    {% if next_event.registration_link %}
+                    <a href="{{ next_event.registration_link }}" target="_blank" class="btn btn-outline-cyber">
+                        <i class="bi bi-pencil-square me-2"></i>Register Now
+                    </a>
+                    {% endif %}
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Events Grid -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">
+                <i class="bi bi-calendar-event text-cyan me-2"></i>
+                {% if status_filter != 'all' %}
+                    {{ status_filter }} Events
+                {% else %}
+                    All Events
+                {% endif %}
+            </h3>
+        </div>
+    </div>
+
+    {% if events %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for event in events %}
+        <div class="col">
+            <div class="cyber-card h-100">
+                <div class="position-relative">
+                    {% if event.image %}
+                    <img src="{{ event.image.url }}" 
+                         class="card-img-top event-image" 
+                         alt="{{ event.title }}"
+                         style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="event-placeholder bg-dark d-flex align-items-center justify-content-center"
+                         style="height: 200px;">
+                        <i class="bi bi-calendar-event fs-1 text-cyan"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Status Badge -->
+                    <span class="position-absolute top-0 end-0 m-3 status-badge status-{{ event.status|lower }}">
+                        {{ event.status }}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    
+                    <div class="event-meta mb-3">
+                        <p class="mb-1">
+                            <i class="bi bi-calendar text-cyan me-2"></i>
+                            {{ event.date|date:"M d, Y" }}
+                        </p>
+                        <p class="mb-1">
+                            <i class="bi bi-clock text-cyan me-2"></i>
+                            {{ event.date|date:"h:i A" }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-geo-alt text-cyan me-2"></i>
+                            {{ event.location }}
+                        </p>
+                    </div>
+                    
+                    <p class="card-text">{{ event.description|truncatewords:30 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <a href="{% url 'event_detail' event.id %}" class="text-cyan text-decoration-none">
+                            View Details <i class="bi bi-arrow-right"></i>
+                        </a>
+                        
+                        {% if event.registration_link and event.status == 'Upcoming' %}
+                        <a href="{{ event.registration_link }}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-cyber">
+                            Register
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Empty State -->
+    {% else %}
+    <div class="cyber-card text-center py-5">
+        <i class="bi bi-calendar-x fs-1 text-cyan mb-3"></i>
+        <h4 class="mb-3">No Events Found</h4>
+        <p class="text-muted">No events match your search criteria.</p>
+        <a href="{% url 'events' %}" class="btn btn-cyber">
+            <i class="bi bi-arrow-clockwise me-2"></i>Clear Filters
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Event Categories -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="section-title">EVENT CATEGORIES</h3>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card-orange text-center p-4 h-100">
+                <i class="bi bi-laptop fs-1 text-orange mb-3"></i>
+                <h5>Workshops</h5>
+                <p class="small">Hands-on training sessions on latest technologies</p>
+                <span class="badge bg-orange">Active</span>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card text-center p-4 h-100">
+                <i class="bi bi-trophy fs-1 text-cyan mb-3"></i>
+                <h5>Competitions</h5>
+                <p class="small">Robotics and coding challenges with prizes</p>
+                <span class="badge bg-cyan">Upcoming</span>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card-orange text-center p-4 h-100">
+                <i class="bi bi-megaphone fs-1 text-orange mb-3"></i>
+                <h5>Seminars</h5>
+                <p class="small">Tech talks from industry experts</p>
+                <span class="badge bg-orange">Regular</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="cyber-card text-center p-5 mt-5">
+        <h3 class="glow-text mb-3">ORGANIZE AN EVENT WITH US</h3>
+        <p class="lead mb-4">Want to host a workshop, competition, or tech talk?</p>
+        <a href="mailto:events@bars.baiust.edu" class="btn btn-cyber btn-lg">
+            <i class="bi bi-envelope me-2"></i>Propose an Event
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize event countdown
+    function updateCountdown() {
+        const countdownElements = document.querySelectorAll('.countdown');
+        
+        countdownElements.forEach(element => {
+            const endDate = new Date(element.dataset.end).getTime();
+            const now = new Date().getTime();
+            const distance = endDate - now;
+            
+            if (distance > 0) {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                element.innerHTML = `
+                    <div class="row justify-content-center">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="bg-dark rounded p-3">
+                                <div class="display-4 fw-bold text-cyan">${days}</div>
+                                <small class="text-uppercase">Days</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="bg-dark rounded p-3">
+                                <div class="display-4 fw-bold text-cyan">${hours}</div>
+                                <small class="text-uppercase">Hours</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="bg-dark rounded p-3">
+                                <div class="display-4 fw-bold text-cyan">${minutes}</div>
+                                <small class="text-uppercase">Minutes</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="bg-dark rounded p-3">
+                                <div class="display-4 fw-bold text-cyan">${seconds}</div>
+                                <small class="text-uppercase">Seconds</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                element.innerHTML = `
+                    <div class="alert alert-cyber">
+                        <i class="bi bi-megaphone-fill me-2"></i>
+                        EVENT HAS STARTED!
+                    </div>
+                `;
+            }
+        });
+    }
+    
+    // Update countdown every second
+    if (document.querySelector('.countdown')) {
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+    }
+    
+    // Event card hover effects
+    const eventCards = document.querySelectorAll('.cyber-card');
+    eventCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-10px)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Active filter button styling
+    const filterButtons = document.querySelectorAll('.btn-outline-cyber');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}

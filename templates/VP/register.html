@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Registration Card -->
+            <div class="cyber-card p-4">
+                <div class="text-center mb-4">
+                    <h2 class="glow-text">JOIN BARS</h2>
+                    <p class="text-cyan">Create your account to access exclusive content</p>
+                </div>
+                
+                <form method="POST" class="cyber-form">
+                    {% csrf_token %}
+                    
+                    <!-- Error Messages -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Registration Error</h5>
+                        <ul class="mb-0">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row g-3">
+                        <!-- Username -->
+                        <div class="col-md-6">
+                            <label for="id_username" class="form-label">
+                                <i class="bi bi-person-circle text-cyan me-2"></i>Username *
+                            </label>
+                            {{ form.username }}
+                            <div class="form-text">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                        </div>
+                        
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <label for="id_email" class="form-label">
+                                <i class="bi bi-envelope text-cyan me-2"></i>Email *
+                            </label>
+                            {{ form.email }}
+                        </div>
+                        
+                        <!-- Password Fields -->
+                        <div class="col-md-6">
+                            <label for="id_password1" class="form-label">
+                                <i class="bi bi-lock text-cyan me-2"></i>Password *
+                            </label>
+                            {{ form.password1 }}
+                            <div class="form-text">
+                                <small>Your password must contain at least 8 characters.</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_password2" class="form-label">
+                                <i class="bi bi-lock-fill text-cyan me-2"></i>Confirm Password *
+                            </label>
+                            {{ form.password2 }}
+                        </div>
+                        
+                        <!-- User Type -->
+                        <div class="col-12">
+                            <label for="id_user_type" class="form-label">
+                                <i class="bi bi-person-badge text-cyan me-2"></i>Account Type *
+                            </label>
+                            {{ form.user_type }}
+                        </div>
+                        
+                        <!-- Student ID (for students only) -->
+                        <div class="col-md-6" id="student-id-field">
+                            <label for="id_student_id" class="form-label">
+                                <i class="bi bi-card-text text-cyan me-2"></i>Student ID
+                            </label>
+                            {{ form.student_id }}
+                        </div>
+                        
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <label for="id_phone" class="form-label">
+                                <i class="bi bi-phone text-cyan me-2"></i>Phone Number
+                            </label>
+                            {{ form.phone }}
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-cyber w-100 py-3">
+                                <i class="bi bi-person-plus-fill me-2"></i>CREATE ACCOUNT
+                            </button>
+                        </div>
+                        
+                        <!-- Login Link -->
+                        <div class="col-12 text-center mt-3">
+                            <p class="mb-0">
+                                Already have an account?
+                                <a href="{% url 'login' %}" class="text-orange text-decoration-none ms-2">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i>Login here
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Registration Benefits -->
+            <div class="cyber-card-orange p-4 mt-4">
+                <h4 class="text-center mb-3">
+                    <i class="bi bi-stars text-orange me-2"></i>Member Benefits
+                </h4>
+                
+                <div class="row text-center g-3">
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="bi bi-calendar-event fs-1 text-cyan mb-2"></i>
+                            <h5>Event Access</h5>
+                            <p class="small mb-0">Register for workshops and competitions</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="bi bi-file-earmark-text fs-1 text-cyan mb-2"></i>
+                            <h5>Resources</h5>
+                            <p class="small mb-0">Access member-only tutorials and guides</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="bi bi-trophy fs-1 text-cyan mb-2"></i>
+                            <h5>Certifications</h5>
+                            <p class="small mb-0">Earn certificates for participation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Style form inputs
+    const formInputs = document.querySelectorAll('input, select');
+    formInputs.forEach(input => {
+        input.classList.add('form-control', 'bg-dark', 'text-light', 'border-cyan');
+    });
+    
+    // Show/hide student ID field based on user type
+    const userTypeSelect = document.getElementById('id_user_type');
+    const studentIdField = document.getElementById('student-id-field');
+    
+    function toggleStudentIdField() {
+        if (userTypeSelect.value === 'student') {
+            studentIdField.style.display = 'block';
+        } else {
+            studentIdField.style.display = 'none';
+            document.getElementById('id_student_id').value = '';
+        }
+    }
+    
+    // Initial check
+    toggleStudentIdField();
+    
+    // Add event listener
+    userTypeSelect.addEventListener('change', toggleStudentIdField);
+    
+    // Password strength indicator
+    const password1 = document.getElementById('id_password1');
+    const password2 = document.getElementById('id_password2');
+    
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        
+        // Length check
+        if (password.length >= 8) strength++;
+        
+        // Contains uppercase
+        if (/[A-Z]/.test(password)) strength++;
+        
+        // Contains lowercase
+        if (/[a-z]/.test(password)) strength++;
+        
+        // Contains numbers
+        if (/[0-9]/.test(password)) strength++;
+        
+        // Contains special characters
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+        
+        return strength;
+    }
+    
+    function updatePasswordStrength() {
+        const password = password1.value;
+        const strength = checkPasswordStrength(password);
+        const strengthBar = document.getElementById('password-strength-bar');
+        
+        if (!strengthBar) {
+            // Create strength bar if it doesn't exist
+            const strengthDiv = document.createElement('div');
+            strengthDiv.className = 'mt-2';
+            strengthDiv.innerHTML = `
+                <div class="d-flex justify-content-between mb-1">
+                    <small>Password Strength:</small>
+                    <small class="strength-text">Weak</small>
+                </div>
+                <div class="progress" style="height: 5px;">
+                    <div id="password-strength-bar" class="progress-bar" 
+                         role="progressbar" style="width: 0%"></div>
+                </div>
+            `;
+            password1.parentNode.appendChild(strengthDiv);
+        }
+        
+        const bar = document.getElementById('password-strength-bar');
+        const strengthText = document.querySelector('.strength-text');
+        
+        let width = strength * 20;
+        let color = 'bg-danger';
+        let text = 'Weak';
+        
+        if (strength >= 4) {
+            color = 'bg-success';
+            text = 'Strong';
+        } else if (strength >= 3) {
+            color = 'bg-warning';
+            text = 'Medium';
+        }
+        
+        bar.style.width = width + '%';
+        bar.className = `progress-bar ${color}`;
+        strengthText.textContent = text;
+        strengthText.className = `strength-text ${color.replace('bg-', 'text-')}`;
+    }
+    
+    function checkPasswordMatch() {
+        if (password1.value && password2.value) {
+            if (password1.value !== password2.value) {
+                password2.classList.add('is-invalid');
+                password2.classList.remove('is-valid');
+                
+                const feedback = password2.nextElementSibling || document.createElement('div');
+                feedback.className = 'invalid-feedback text-danger';
+                feedback.textContent = 'Passwords do not match!';
+                password2.parentNode.appendChild(feedback);
+            } else {
+                password2.classList.remove('is-invalid');
+                password2.classList.add('is-valid');
+            }
+        }
+    }
+    
+    // Add event listeners for password fields
+    if (password1) {
+        password1.addEventListener('input', updatePasswordStrength);
+    }
+    
+    if (password1 && password2) {
+        password1.addEventListener('input', checkPasswordMatch);
+        password2.addEventListener('input', checkPasswordMatch);
+    }
+    
+    // Cyber effect for form submission
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalHTML = submitBtn.innerHTML;
+        
+        // Add loading animation
+        submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Processing...';
+        submitBtn.disabled = true;
+        
+        // Cyber pulse effect
+        submitBtn.style.animation = 'pulse 1s infinite';
+    });
+});
+
+// CSS for spinner
+const style = document.createElement('style');
+style.textContent = `
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

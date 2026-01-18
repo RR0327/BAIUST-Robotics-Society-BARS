@@ -359,3 +359,214 @@ body::before {
         transform: translateY(0);
     }
 }
+
+/* Registration & Login Specific Styles */
+
+/* Form Validation */
+.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.is-valid {
+    border-color: #198754 !important;
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
+}
+
+/* Custom form controls */
+.input-group-text.border-cyan {
+    border-color: var(--primary-cyan) !important;
+}
+
+/* Accordion cyber theme */
+.accordion-button::after {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+/* Progress bar for password strength */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--primary-orange), var(--primary-cyan));
+    border-radius: 10px;
+}
+
+/* List group cyber theme */
+.list-group-item.bg-transparent {
+    background: transparent !important;
+    color: white;
+}
+
+/* Demo accounts code styling */
+code {
+    background: rgba(0, 243, 255, 0.1);
+    color: var(--primary-cyan);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--primary-cyan);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+code:hover {
+    background: rgba(0, 243, 255, 0.2);
+    box-shadow: var(--neon-glow);
+}
+
+/* Login status indicator */
+.bg-cyan {
+    background-color: var(--primary-cyan) !important;
+    animation: statusPulse 2s infinite;
+}
+
+.bg-cyan:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+.bg-cyan:nth-child(3) {
+    animation-delay: 1s;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .cyber-form {
+        padding: 1rem;
+    }
+    
+    .input-group-text {
+        padding: 0.5rem;
+    }
+}
+
+/* Events Page Specific */
+.event-placeholder {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.event-meta p {
+    margin-bottom: 0.5rem;
+}
+
+.event-description {
+    line-height: 1.8;
+}
+
+.event-description p {
+    margin-bottom: 1rem;
+}
+
+/* Advisor Page Specific */
+.advisor-photo {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 3px solid var(--primary-cyan);
+    transition: all 0.3s ease;
+}
+
+.advisor-photo:hover {
+    transform: scale(1.05);
+    box-shadow: var(--neon-glow);
+}
+
+.advisor-photo.placeholder {
+    background: rgba(0, 243, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal Styling */
+.modal-content.bg-dark-card {
+    background: var(--dark-card);
+    border: 1px solid var(--primary-cyan);
+}
+
+.modal-header.border-cyan,
+.modal-footer.border-cyan {
+    border-color: var(--primary-cyan) !important;
+}
+
+.btn-close-white {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+/* Badge Colors */
+.bg-cyan {
+    background-color: var(--primary-cyan) !important;
+    color: #000 !important;
+}
+
+.bg-orange {
+    background-color: var(--primary-orange) !important;
+    color: #000 !important;
+}
+
+/* Filter Button Active State */
+.btn-outline-cyber.active {
+    background: linear-gradient(45deg, var(--primary-cyan), var(--primary-orange));
+    color: #000 !important;
+    border-color: transparent;
+}
+
+/* List Group Items */
+.list-group-item.bg-transparent {
+    background: transparent !important;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.list-group-item.bg-transparent:hover {
+    background: rgba(0, 243, 255, 0.1) !important;
+    border-color: var(--primary-cyan) !important;
+}
+
+/* Statistics Cards */
+.stat-card {
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--neon-glow);
+}
+
+/* Registration Button Pulse */
+@keyframes pulse-register {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-cyber.pulse {
+    animation: pulse-register 2s infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .advisor-photo {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .timer-section {
+        padding: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+}

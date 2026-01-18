@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <!-- Login Card -->
+            <div class="cyber-card p-4">
+                <div class="text-center mb-4">
+                    <h2 class="glow-text">MEMBER LOGIN</h2>
+                    <p class="text-cyan">Access your BARS account</p>
+                    
+                    <!-- Login Status Indicator -->
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="p-2 rounded-circle bg-cyan me-2"></div>
+                        <div class="p-2 rounded-circle bg-cyan me-2"></div>
+                        <div class="p-2 rounded-circle bg-cyan"></div>
+                    </div>
+                </div>
+                
+                <form method="POST" class="cyber-form">
+                    {% csrf_token %}
+                    
+                    <!-- Messages -->
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <i class="bi 
+                                {% if message.tags == 'success' %}bi-check-circle-fill text-success
+                                {% elif message.tags == 'error' %}bi-x-circle-fill text-danger
+                                {% else %}bi-info-circle-fill text-info{% endif %}
+                                me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Username -->
+                    <div class="mb-4">
+                        <label for="id_username" class="form-label">
+                            <i class="bi bi-person-fill text-cyan me-2"></i>Username
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-cyan">
+                                <i class="bi bi-person text-cyan"></i>
+                            </span>
+                            {{ form.username }}
+                        </div>
+                    </div>
+                    
+                    <!-- Password -->
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label">
+                            <i class="bi bi-key-fill text-cyan me-2"></i>Password
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-cyan">
+                                <i class="bi bi-lock text-cyan"></i>
+                            </span>
+                            {{ form.password }}
+                            <button class="btn btn-outline-cyber" type="button" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">
+                                Remember me
+                            </label>
+                        </div>
+                        <a href="#" class="text-orange text-decoration-none">
+                            <i class="bi bi-question-circle me-1"></i>Forgot password?
+                        </a>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-cyber w-100 py-3 mb-3">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>LOGIN TO SYSTEM
+                    </button>
+                    
+                    <!-- Demo Accounts (for testing) -->
+                    <div class="accordion" id="demoAccounts">
+                        <div class="accordion-item border-cyan bg-dark">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark text-cyan" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#demoDetails">
+                                    <i class="bi bi-code-slash me-2"></i>Demo Accounts
+                                </button>
+                            </h2>
+                            <div id="demoDetails" class="accordion-collapse collapse" data-bs-parent="#demoAccounts">
+                                <div class="accordion-body">
+                                    <small class="text-muted">For testing purposes:</small>
+                                    <ul class="list-unstyled mt-2">
+                                        <li><code>admin:admin123</code> - Admin account</li>
+                                        <li><code>member:member123</code> - Member account</li>
+                                        <li><code>student:student123</code> - Student account</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <div class="position-relative my-4">
+                        <hr class="border-cyan">
+                        <span class="position-absolute top-50 start-50 translate-middle px-3 bg-dark">
+                            OR
+                        </span>
+                    </div>
+                    
+                    <!-- Registration Link -->
+                    <div class="text-center">
+                        <p class="mb-3">New to BARS?</p>
+                        <a href="{% url 'register' %}" class="btn btn-outline-cyber w-100">
+                            <i class="bi bi-person-plus me-2"></i>CREATE NEW ACCOUNT
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Login Instructions -->
+            <div class="cyber-card-orange p-4 mt-4">
+                <h4 class="text-center mb-3">
+                    <i class="bi bi-info-circle text-orange me-2"></i>Login Instructions
+                </h4>
+                
+                <div class="list-group list-group-flush bg-transparent">
+                    <div class="list-group-item bg-transparent border-orange">
+                        <i class="bi bi-shield-check text-cyan me-2"></i>
+                        Use your registered username or email
+                    </div>
+                    <div class="list-group-item bg-transparent border-orange">
+                        <i class="bi bi-exclamation-triangle text-cyan me-2"></i>
+                        Passwords are case-sensitive
+                    </div>
+                    <div class="list-group-item bg-transparent border-orange">
+                        <i class="bi bi-clock text-cyan me-2"></i>
+                        Sessions expire after 2 hours of inactivity
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Style form inputs
+    const formInputs = document.querySelectorAll('input');
+    formInputs.forEach(input => {
+        input.classList.add('form-control', 'bg-dark', 'text-light', 'border-cyan');
+    });
+    
+    // Password visibility toggle
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('id_password');
+    
+    if (togglePassword && passwordField) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // Toggle icon
+            const icon = this.querySelector('i');
+            if (type === 'password') {
+                icon.className = 'bi bi-eye';
+                this.classList.remove('btn-cyber');
+                this.classList.add('btn-outline-cyber');
+            } else {
+                icon.className = 'bi bi-eye-slash';
+                this.classList.remove('btn-outline-cyber');
+                this.classList.add('btn-cyber');
+            }
+        });
+    }
+    
+    // Auto-fill demo accounts on click
+    const demoItems = document.querySelectorAll('#demoDetails code');
+    demoItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const credentials = this.textContent.split(':');
+            if (credentials.length === 2) {
+                document.getElementById('id_username').value = credentials[0].trim();
+                document.getElementById('id_password').value = credentials[1].trim();
+                
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Demo credentials filled! Click "LOGIN TO SYSTEM"
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                this.parentNode.appendChild(alertDiv);
+            }
+        });
+    });
+    
+    // Form submission animation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalHTML = submitBtn.innerHTML;
+        
+        // Add loading animation
+        submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Authenticating...';
+        submitBtn.disabled = true;
+        
+        // Cyber login animation
+        const loginCard = document.querySelector('.cyber-card');
+        loginCard.style.animation = 'loginPulse 1s infinite';
+        
+        // Add typing effect on inputs
+        const inputs = this.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.style.animation = 'typeEffect 0.5s forwards';
+        });
+    });
+    
+    // Cyber typing effect for inputs on focus
+    const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.boxShadow = 'var(--neon-glow)';
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.style.boxShadow = '';
+            this.style.transform = '';
+        });
+    });
+});
+
+// Add custom animations
+const style = document.createElement('style');
+style.textContent = `
+    /* Login animations */
+    @keyframes loginPulse {
+        0% { box-shadow: 0 0 10px var(--primary-cyan); }
+        50% { box-shadow: 0 0 20px var(--primary-cyan), 0 0 30px var(--primary-orange); }
+        100% { box-shadow: 0 0 10px var(--primary-cyan); }
+    }
+    
+    @keyframes typeEffect {
+        0% { transform: translateX(-5px); opacity: 0.8; }
+        100% { transform: translateX(0); opacity: 1; }
+    }
+    
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Cyber checkbox styling */
+    .form-check-input:checked {
+        background-color: var(--primary-cyan);
+        border-color: var(--primary-cyan);
+    }
+    
+    .form-check-input:focus {
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 0 0.25rem rgba(0, 243, 255, 0.25);
+    }
+    
+    /* List group items */
+    .list-group-item.border-orange {
+        border-color: var(--primary-orange) !important;
+    }
+    
+    /* Accordion styling */
+    .accordion-button:not(.collapsed) {
+        background-color: rgba(0, 243, 255, 0.1);
+        color: var(--primary-cyan);
+        box-shadow: inset 0 -1px 0 var(--primary-cyan);
+    }
+    
+    .accordion-button:focus {
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 0 0.25rem rgba(0, 243, 255, 0.25);
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

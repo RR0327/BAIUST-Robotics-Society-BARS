@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="glow-text mb-3">FACULTY ADVISORS</h1>
+            <p class="lead text-cyan">Meet our dedicated faculty mentors and advisors</p>
+        </div>
+    </div>
+
+    <!-- Advisor Statistics -->
+    <div class="row mb-5">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ advisors.count }}</h2>
+                <p class="mb-0">Total Advisors</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ departments.count }}</h2>
+                <p class="mb-0">Departments</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">5+</h2>
+                <p class="mb-0">Years Experience</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">50+</h2>
+                <p class="mb-0">Projects Guided</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advisors Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for advisor in advisors %}
+        <div class="col">
+            <div class="cyber-card h-100">
+                <div class="card-body text-center">
+                    <!-- Advisor Photo -->
+                    <div class="mb-4">
+                        {% if advisor.photo %}
+                        <img src="{{ advisor.photo.url }}" 
+                             alt="{{ advisor.name }}"
+                             class="advisor-photo rounded-circle border-cyan">
+                        {% else %}
+                        <div class="advisor-photo placeholder rounded-circle border-cyan d-flex align-items-center justify-content-center mx-auto">
+                            <i class="bi bi-person-fill fs-1 text-cyan"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Advisor Info -->
+                    <h4 class="card-title mb-2">{{ advisor.name }}</h4>
+                    <p class="text-orange mb-2">{{ advisor.designation }}</p>
+                    <p class="text-cyan mb-3">
+                        <i class="bi bi-building me-1"></i>
+                        {{ advisor.department }}
+                    </p>
+                    
+                    <!-- Bio Preview -->
+                    <p class="card-text small mb-4">{{ advisor.bio|truncatewords:20 }}</p>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-center gap-2">
+                        <button class="btn btn-sm btn-outline-cyber" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#advisorModal{{ advisor.id }}">
+                            <i class="bi bi-eye me-1"></i>View Profile
+                        </button>
+                        <a href="mailto:{{ advisor.email }}" class="btn btn-sm btn-outline-cyber">
+                            <i class="bi bi-envelope me-1"></i>Contact
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- No Advisors Message -->
+    {% if not advisors %}
+    <div class="cyber-card text-center py-5">
+        <i class="bi bi-people fs-1 text-cyan mb-3"></i>
+        <h4 class="mb-3">No Advisors Found</h4>
+        <p class="text-muted">Faculty advisors will be listed here soon.</p>
+    </div>
+    {% endif %}
+
+    <!-- Advisor Roles Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="section-title">ADVISOR ROLES & RESPONSIBILITIES</h3>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card p-4 h-100">
+                <div class="text-center mb-3">
+                    <i class="bi bi-briefcase fs-1 text-cyan"></i>
+                </div>
+                <h5 class="text-center">Project Guidance</h5>
+                <p class="text-center small">Mentoring students on robotics and automation projects</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card-orange p-4 h-100">
+                <div class="text-center mb-3">
+                    <i class="bi bi-lightbulb fs-1 text-orange"></i>
+                </div>
+                <h5 class="text-center">Technical Support</h5>
+                <p class="text-center small">Providing technical expertise and resource access</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card p-4 h-100">
+                <div class="text-center mb-3">
+                    <i class="bi bi-mortarboard fs-1 text-cyan"></i>
+                </div>
+                <h5 class="text-center">Career Mentorship</h5>
+                <p class="text-center small">Guiding students for academic and professional growth</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Become an Advisor CTA -->
+    {% if user.is_authenticated and user.userprofile.user_type == 'admin' %}
+    <div class="cyber-card text-center p-5 mt-5">
+        <h3 class="glow-text mb-3">MANAGE ADVISORS</h3>
+        <p class="lead mb-4">Add or update faculty advisor information</p>
+        <a href="/admin/VP/advisor/" class="btn btn-cyber btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Manage in Admin Panel
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Advisor Modals -->
+{% for advisor in advisors %}
+<div class="modal fade" id="advisorModal{{ advisor.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark-card border-cyan">
+            <div class="modal-header border-cyan">
+                <h5 class="modal-title">{{ advisor.name }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-4 text-center">
+                        {% if advisor.photo %}
+                        <img src="{{ advisor.photo.url }}" 
+                             alt="{{ advisor.name }}"
+                             class="img-fluid rounded-circle border-cyan mb-3"
+                             style="width: 200px; height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle border-cyan d-flex align-items-center justify-content-center mx-auto mb-3"
+                             style="width: 200px; height: 200px; background: rgba(0, 243, 255, 0.1);">
+                            <i class="bi bi-person-fill fs-1 text-cyan"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <h5 class="text-orange">{{ advisor.designation }}</h5>
+                        <p class="text-cyan">
+                            <i class="bi bi-building me-1"></i>
+                            {{ advisor.department }}
+                        </p>
+                        
+                        <div class="mt-4">
+                            <a href="mailto:{{ advisor.email }}" class="btn btn-outline-cyber w-100 mb-2">
+                                <i class="bi bi-envelope me-1"></i>Email Advisor
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="col-md-8">
+                        <h6 class="text-cyan mb-3">Biography</h6>
+                        <p class="mb-4">{{ advisor.bio|linebreaks }}</p>
+                        
+                        {% if advisor.credentials %}
+                        <h6 class="text-cyan mb-3">Credentials & Achievements</h6>
+                        <div class="credentials">
+                            {{ advisor.credentials|linebreaks }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-4 pt-4 border-top border-cyan">
+                            <h6 class="text-cyan mb-3">Areas of Expertise</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge bg-cyan">Robotics</span>
+                                <span class="badge bg-cyan">Automation</span>
+                                <span class="badge bg-cyan">AI/ML</span>
+                                <span class="badge bg-cyan">IoT</span>
+                                <span class="badge bg-cyan">Embedded Systems</span>
+                                <span class="badge bg-cyan">Research</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-cyan">
+                <button type="button" class="btn btn-outline-cyber" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.advisor-photo {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 3px solid var(--primary-cyan);
+}
+
+.advisor-photo.placeholder {
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.credentials {
+    background: rgba(0, 243, 255, 0.05);
+    border-left: 3px solid var(--primary-cyan);
+    padding: 1rem;
+    border-radius: 0 5px 5px 0;
+}
+
+.modal-content.bg-dark-card {
+    background: var(--dark-card);
+}
+
+.border-cyan {
+    border-color: var(--primary-cyan) !important;
+}
+</style>
+{% endblock %}
