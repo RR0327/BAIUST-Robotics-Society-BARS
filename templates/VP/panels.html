@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5 glow-text">EXECUTIVE PANELS</h1>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for panel in panels %}
+        <div class="col">
+            <div class="cyber-card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title text-cyan">{{ panel.name }}</h3>
+                    <h5 class="text-orange mb-4">{{ panel.year }}</h5>
+                    
+                    <p class="card-text">{{ panel.description|truncatewords:30 }}</p>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'panel_detail' panel.id %}" class="btn btn-outline-cyber me-2">
+                            <i class="bi bi-people me-1"></i>View Members
+                        </a>
+                        <span class="badge bg-cyan rounded-pill">
+                            {{ panel.members.count }} Members
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

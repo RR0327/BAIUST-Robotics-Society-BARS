@@ -1,0 +1,244 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">INNOVATE. BUILD. INSPIRE.</h1>
+        <p class="lead fs-3 mb-4">BAIUST Robotics & Automation Society</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{% url 'register' %}" class="btn btn-cyber btn-lg">
+                <i class="bi bi-person-plus me-2"></i>JOIN US
+            </a>
+            <a href="#events" class="btn btn-outline-cyber btn-lg">
+                <i class="bi bi-calendar-event me-2"></i>VIEW EVENTS
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Panels -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title">EXECUTIVE PANELS</h2>
+        
+        <!-- Panel Tabs -->
+        <ul class="nav panel-tabs" id="panelTabs" role="tablist">
+            {% for panel in panels %}
+            <li class="nav-item" role="presentation">
+                <button class="panel-tab {% if forloop.first %}active{% endif %}" 
+                        id="tab-{{ panel.id }}" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#panel-{{ panel.id }}" 
+                        type="button">
+                    {{ panel.name }}
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Panel Content -->
+        <div class="tab-content mt-4" id="panelContent">
+            {% for panel in panels %}
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                 id="panel-{{ panel.id }}" 
+                 role="tabpanel">
+                
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h3 class="text-cyan mb-3">{{ panel.name }} ({{ panel.year }})</h3>
+                        <p class="lead">{{ panel.description }}</p>
+                    </div>
+                    <div class="col-lg-4 text-end">
+                        <a href="{% url 'panel_detail' panel.id %}" class="btn btn-outline-cyber">
+                            View Full Panel <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Members Grid -->
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+                    {% for member in panel.members.all|slice:":6" %}
+                    <div class="col">
+                        <div class="cyber-card h-100 p-3 text-center">
+                            {% if member.photo %}
+                            <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                 class="member-photo">
+                            {% else %}
+                            <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                <i class="bi bi-person-fill fs-1"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <h5 class="mt-3">{{ member.name }}</h5>
+                            <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                            <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                            
+                            <div class="mt-auto">
+                                <button class="btn btn-sm btn-outline-cyber" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#memberModal{{ member.id }}">
+                                    View Profile
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Live Events Section -->
+<section id="events" class="py-5 bg-dark-card">
+    <div class="container">
+        <h2 class="section-title">LIVE & UPCOMING EVENTS</h2>
+        
+        <!-- Countdown Timer -->
+        {% for event in upcoming_events|slice:":1" %}
+        {% if event.status == 'Upcoming' %}
+        <div class="timer-section">
+            <h3 class="mb-4">{{ event.title }}</h3>
+            <div class="timer-display countdown" data-end="{{ event.date|date:'Y-m-d H:i:s' }}">
+                Loading...
+            </div>
+            <p class="lead mt-3">{{ event.description|truncatewords:30 }}</p>
+            {% if event.registration_link %}
+            <a href="{{ event.registration_link }}" class="btn btn-cyber btn-lg mt-3">
+                <i class="bi bi-pencil-square me-2"></i>REGISTER NOW
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Events Grid -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-4">
+            {% for event in upcoming_events %}
+            <div class="col">
+                <div class="cyber-card-orange h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="status-badge status-{{ event.status|lower }}">
+                                {{ event.status }}
+                            </span>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>{{ event.date|date:"M d, Y" }}
+                            </small>
+                        </div>
+                        
+                        {% if event.image %}
+                        <img src="{{ event.image.url }}" alt="{{ event.title }}" class="event-image">
+                        {% endif %}
+                        
+                        <h5 class="card-title">{{ event.title }}</h5>
+                        <p class="card-text">{{ event.description|truncatewords:20 }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="text-orange">
+                                <i class="bi bi-geo-alt me-1"></i>{{ event.location }}
+                            </span>
+                            <a href="#" class="text-cyan">View Details →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Completed Events -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title">COMPLETED EVENTS</h2>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for event in completed_events|slice:":3" %}
+            <div class="col">
+                <div class="cyber-card h-100">
+                    <div class="card-body">
+                        <span class="status-badge status-completed">COMPLETED</span>
+                        
+                        <h5 class="card-title mt-2">{{ event.title }}</h5>
+                        <p class="text-muted">
+                            <i class="bi bi-calendar me-1"></i>{{ event.date|date:"F d, Y" }}
+                        </p>
+                        
+                        <p class="card-text">{{ event.description|truncatewords:25 }}</p>
+                        
+                        <div class="mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-cyber me-2">
+                                <i class="bi bi-images me-1"></i>Photos
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-cyber">
+                                <i class="bi bi-trophy me-1"></i>Results
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'events' %}" class="btn btn-cyber">
+                <i class="bi bi-archive me-2"></i>VIEW EVENT ARCHIVE
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Member Modals -->
+{% for panel in panels %}
+{% for member in panel.members.all|slice:":6" %}
+<div class="modal fade" id="memberModal{{ member.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-card border-cyan">
+            <div class="modal-header border-cyan">
+                <h5 class="modal-title">{{ member.name }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    {% if member.photo %}
+                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                         class="member-photo">
+                    {% endif %}
+                    <h6 class="text-orange mt-2">{{ member.role }}</h6>
+                </div>
+                
+                <h6 class="text-cyan">About</h6>
+                <p>{{ member.bio }}</p>
+                
+                {% if member.email or member.linkedin or member.github %}
+                <h6 class="text-cyan mt-3">Contact</h6>
+                <div class="d-flex gap-2">
+                    {% if member.email %}
+                    <a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-cyber">
+                        <i class="bi bi-envelope"></i>
+                    </a>
+                    {% endif %}
+                    {% if member.linkedin %}
+                    <a href="{{ member.linkedin }}" target="_blank" class="btn btn-sm btn-outline-cyber">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    {% endif %}
+                    {% if member.github %}
+                    <a href="{{ member.github }}" target="_blank" class="btn btn-sm btn-outline-cyber">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endfor %}
+
+{% endblock %}
