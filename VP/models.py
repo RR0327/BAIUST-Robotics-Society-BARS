@@ -20,8 +20,15 @@ class Member(models.Model):
     ROLES = [
         ("President", "President"),
         ("Vice President", "Vice President"),
-        ("Secretary", "Secretary"),
+        ("General Secretary", "General Secretary"),
+        ("Joint Secretary", "Joint Secretary"),
         ("Treasurer", "Treasurer"),
+        ("Assistant Treasurer", "Assistant Treasurer"),
+        ("Organizing Secretary", "Organizing Secretary"),
+        ("Assistant Organizing Secretary", "Assistant Organizing Secretary"),
+        ("Media & Publication Secretary", "Media & Publication Secretary"),
+        ("Assistant Media & Publication Secretary", "Assistant Media & Publication Secretary"),
+        ("Executive Member", "Executive Member"),
         ("Member", "Member"),
     ]
 
