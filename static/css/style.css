@@ -9,20 +9,42 @@
     --orange-glow: 0 0 10px var(--primary-orange), 0 0 20px var(--primary-orange);
 }
 
-/* Custom Text Colors */
-.text-cyan {
-    color: var(--primary-cyan) !important;
+/* --- Base Body & Layout Fixes --- */
+body {
+    background-color: var(--dark-bg);
+    color: #fff;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-.text-orange {
-    color: var(--primary-orange) !important;
+/* FIX: Prevent background shift and text hiding when modal opens */
+body.modal-open {
+    overflow-y: scroll !important;
+    padding-right: 0 !important;
 }
 
-.bg-dark-card {
-    background-color: var(--dark-card) !important;
+.modal-backdrop {
+    opacity: 0.6 !important;
+    background-color: #000 !important;
 }
 
-/* Navbar Styling */
+.modal {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+/* Ensure the main container doesn't clip neon glows or background text */
+main.container-fluid {
+    overflow: visible !important;
+}
+
+/* --- Custom Text & Backgrounds --- */
+.text-cyan { color: var(--primary-cyan) !important; }
+.text-orange { color: var(--primary-orange) !important; }
+.bg-dark-card { background-color: var(--dark-card) !important; }
+
+/* --- Navbar Styling --- */
 .cyber-navbar {
     background: linear-gradient(135deg, #001f3f, #000) !important;
     border-bottom: 2px solid var(--primary-cyan);
@@ -52,7 +74,7 @@
     background: rgba(0, 243, 255, 0.1);
 }
 
-/* Cyber Buttons */
+/* --- Cyber Buttons --- */
 .btn-cyber {
     background: linear-gradient(45deg, var(--primary-cyan), var(--primary-orange));
     color: #000 !important;
@@ -75,52 +97,35 @@
     transition: all 0.3s ease;
 }
 
-.btn-outline-cyber:hover {
+.btn-outline-cyber:hover, .btn-outline-cyber.active {
     background: var(--primary-cyan);
     color: #000;
     box-shadow: var(--neon-glow);
 }
 
-/* Card Styling */
-.cyber-card {
+/* --- Card Styling --- */
+.cyber-card, .member-card, .event-card {
     background: var(--dark-card);
     border: 1px solid var(--primary-cyan);
     border-radius: 10px;
     transition: all 0.3s ease;
     overflow: hidden;
-    height: 100%;
 }
 
-.cyber-card:hover {
-    transform: translateY(-10px);
-    box-shadow: var(--neon-glow);
-}
-
-.cyber-card-orange {
+.cyber-card-orange, .event-card {
     border-color: var(--primary-orange);
 }
 
-.cyber-card-orange:hover {
-    box-shadow: var(--orange-glow);
-}
-
-/* Member Cards */
-.member-card {
-    background: var(--dark-card);
-    border: 1px solid var(--primary-cyan);
-    border-radius: 10px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-}
-
-.member-card:hover {
+.cyber-card:hover, .member-card:hover {
     transform: translateY(-10px);
     box-shadow: var(--neon-glow);
 }
 
+.cyber-card-orange:hover, .event-card:hover {
+    box-shadow: var(--orange-glow);
+}
+
+/* --- Member & Event Specifics --- */
 .member-photo {
     width: 150px;
     height: 150px;
@@ -131,21 +136,6 @@
     display: block;
 }
 
-/* Event Cards */
-.event-card {
-    background: var(--dark-card);
-    border: 1px solid var(--primary-orange);
-    border-radius: 10px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    height: 100%;
-}
-
-.event-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--orange-glow);
-}
-
 .event-image {
     width: 100%;
     height: 200px;
@@ -154,7 +144,7 @@
     margin-bottom: 1rem;
 }
 
-/* Status Badges */
+/* --- Status Badges --- */
 .status-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -164,25 +154,11 @@
     margin-bottom: 1rem;
 }
 
-.status-upcoming {
-    background: rgba(0, 243, 255, 0.2);
-    color: var(--primary-cyan);
-    border: 1px solid var(--primary-cyan);
-}
+.status-upcoming { background: rgba(0, 243, 255, 0.2); color: var(--primary-cyan); border: 1px solid var(--primary-cyan); }
+.status-ongoing { background: rgba(255, 255, 0, 0.2); color: yellow; border: 1px solid yellow; }
+.status-completed { background: rgba(255, 107, 0, 0.2); color: var(--primary-orange); border: 1px solid var(--primary-orange); }
 
-.status-ongoing {
-    background: rgba(255, 255, 0, 0.2);
-    color: yellow;
-    border: 1px solid yellow;
-}
-
-.status-completed {
-    background: rgba(255, 107, 0, 0.2);
-    color: var(--primary-orange);
-    border: 1px solid var(--primary-orange);
-}
-
-/* Timer Section */
+/* --- Timer Section --- */
 .timer-section {
     background: linear-gradient(135deg, rgba(0, 31, 63, 0.8), rgba(0, 0, 0, 0.9));
     border: 2px solid var(--primary-cyan);
@@ -197,82 +173,29 @@
     font-size: 3rem;
     color: var(--primary-cyan);
     text-shadow: var(--neon-glow);
-    margin: 1rem 0;
 }
 
-@media (max-width: 768px) {
-    .timer-display {
-        font-size: 2rem;
-    }
-}
-
-/* Panel Tabs */
-.panel-tabs {
-    border-bottom: 2px solid var(--primary-cyan);
-    margin-bottom: 2rem;
-}
-
-.panel-tab {
-    background: transparent;
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    margin: 0 0.5rem;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-    font-weight: bold;
-}
-
-.panel-tab:hover, .panel-tab.active {
-    color: var(--primary-cyan);
-    border-bottom-color: var(--primary-cyan);
-}
-
-/* Forms */
+/* --- Forms --- */
 .cyber-form {
     background: var(--dark-card);
     border: 2px solid var(--primary-cyan);
     border-radius: 10px;
     padding: 2rem;
-    max-width: 500px;
-    margin: 2rem auto;
 }
 
 .form-control {
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid var(--primary-cyan) !important;
     color: white !important;
-    border-radius: 5px;
 }
 
 .form-control:focus {
     box-shadow: var(--neon-glow) !important;
-    background: rgba(255, 255, 255, 0.15) !important;
 }
 
-.form-label {
-    color: var(--primary-cyan);
-    font-weight: bold;
-}
-
-/* Alert Styling */
-.cyber-alert {
-    background: var(--dark-card);
-    border: 1px solid var(--primary-cyan);
-    color: white;
-    border-radius: 5px;
-}
-
-/* Footer */
-.cyber-footer {
-    background: linear-gradient(135deg, #001f3f, #000);
-    border-top: 2px solid var(--primary-orange);
-}
-
-/* Hero Section */
+/* --- Hero Section --- */
 .hero-section {
-    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 31, 63, 0.8)), 
-                url('/static/images/hero-bg.jpg');
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 31, 63, 0.8)), url('/static/images/hero-bg.jpg');
     background-size: cover;
     background-position: center;
     padding: 100px 0;
@@ -287,286 +210,34 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    margin-bottom: 1rem;
     text-shadow: var(--neon-glow);
 }
 
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 2.5rem;
-    }
-}
-
-/* Glow Effects */
-.glow-text {
-    text-shadow: var(--neon-glow);
-}
-
-.glow-text-orange {
-    text-shadow: var(--orange-glow);
-}
-
-/* Scanlines Effect */
+/* --- Scanlines Effect --- */
 body::before {
     content: "";
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none;
-    background: linear-gradient(
-        transparent 50%,
-        rgba(0, 0, 0, 0.5) 50%
-    );
+    background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.5) 50%);
     background-size: 100% 4px;
     z-index: 9999;
     opacity: 0.1;
 }
 
-/* Section Titles */
-.section-title {
-    color: var(--primary-cyan);
-    border-bottom: 2px solid var(--primary-cyan);
-    padding-bottom: 0.5rem;
-    margin-bottom: 2rem;
-    font-family: 'Orbitron', sans-serif;
-    position: relative;
-}
-
-.section-title::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100px;
-    height: 2px;
-    background: var(--primary-orange);
-}
-
-/* Tab Content Animation */
-.tab-pane {
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Registration & Login Specific Styles */
-
-/* Form Validation */
-.is-invalid {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
-}
-
-.is-valid {
-    border-color: #198754 !important;
-    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
-}
-
-/* Custom form controls */
-.input-group-text.border-cyan {
-    border-color: var(--primary-cyan) !important;
-}
-
-/* Accordion cyber theme */
-.accordion-button::after {
-    filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg);
-}
-
-/* Progress bar for password strength */
-.progress {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    background: linear-gradient(90deg, var(--primary-orange), var(--primary-cyan));
-    border-radius: 10px;
-}
-
-/* List group cyber theme */
-.list-group-item.bg-transparent {
-    background: transparent !important;
-    color: white;
-}
-
-/* Demo accounts code styling */
-code {
-    background: rgba(0, 243, 255, 0.1);
-    color: var(--primary-cyan);
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid var(--primary-cyan);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-code:hover {
-    background: rgba(0, 243, 255, 0.2);
-    box-shadow: var(--neon-glow);
-}
-
-/* Login status indicator */
-.bg-cyan {
-    background-color: var(--primary-cyan) !important;
-    animation: statusPulse 2s infinite;
-}
-
-.bg-cyan:nth-child(2) {
-    animation-delay: 0.5s;
-}
-
-.bg-cyan:nth-child(3) {
-    animation-delay: 1s;
-}
-
-@keyframes statusPulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
-    .cyber-form {
-        padding: 1rem;
-    }
-    
-    .input-group-text {
-        padding: 0.5rem;
-    }
-}
-
-/* Events Page Specific */
-.event-placeholder {
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 243, 255, 0.1);
-}
-
-.event-meta p {
-    margin-bottom: 0.5rem;
-}
-
-.event-description {
-    line-height: 1.8;
-}
-
-.event-description p {
-    margin-bottom: 1rem;
-}
-
-/* Advisor Page Specific */
-.advisor-photo {
-    width: 150px;
-    height: 150px;
-    object-fit: cover;
-    border: 3px solid var(--primary-cyan);
-    transition: all 0.3s ease;
-}
-
-.advisor-photo:hover {
-    transform: scale(1.05);
-    box-shadow: var(--neon-glow);
-}
-
-.advisor-photo.placeholder {
-    background: rgba(0, 243, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Modal Styling */
+/* --- Modal Content Styling --- */
 .modal-content.bg-dark-card {
     background: var(--dark-card);
     border: 1px solid var(--primary-cyan);
-}
-
-.modal-header.border-cyan,
-.modal-footer.border-cyan {
-    border-color: var(--primary-cyan) !important;
+    box-shadow: var(--neon-glow);
 }
 
 .btn-close-white {
     filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg);
 }
 
-/* Badge Colors */
-.bg-cyan {
-    background-color: var(--primary-cyan) !important;
-    color: #000 !important;
-}
-
-.bg-orange {
-    background-color: var(--primary-orange) !important;
-    color: #000 !important;
-}
-
-/* Filter Button Active State */
-.btn-outline-cyber.active {
-    background: linear-gradient(45deg, var(--primary-cyan), var(--primary-orange));
-    color: #000 !important;
-    border-color: transparent;
-}
-
-/* List Group Items */
-.list-group-item.bg-transparent {
-    background: transparent !important;
-    color: white;
-    transition: all 0.3s ease;
-}
-
-.list-group-item.bg-transparent:hover {
-    background: rgba(0, 243, 255, 0.1) !important;
-    border-color: var(--primary-cyan) !important;
-}
-
-/* Statistics Cards */
-.stat-card {
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--neon-glow);
-}
-
-/* Registration Button Pulse */
-@keyframes pulse-register {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.btn-cyber.pulse {
-    animation: pulse-register 2s infinite;
-}
-
-/* Responsive Adjustments */
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-    .advisor-photo {
-        width: 120px;
-        height: 120px;
-    }
-    
-    .timer-section {
-        padding: 1rem;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-    }
+    .hero-title { font-size: 2.5rem; }
+    .timer-display { font-size: 2rem; }
 }

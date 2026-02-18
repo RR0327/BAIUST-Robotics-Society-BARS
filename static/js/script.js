@@ -12,7 +12,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
-    // 2. Fixed Event Countdown Timer
+    // 2. Modal Layout Fix - Prevents background text shift when viewing profiles
+    document.addEventListener('show.bs.modal', function () {
+        document.body.style.paddingRight = '0px';
+    });
+
+    document.addEventListener('hidden.bs.modal', function () {
+        document.body.style.paddingRight = '0px';
+    });
+
+    // 3. Precision Countdown Timer with PadStart
     function updateCountdown() {
         const countdownElements = document.querySelectorAll('.countdown');
         countdownElements.forEach(element => {
@@ -43,17 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="d-inline-block mx-2"><div class="fs-2 fw-bold">${seconds.toString().padStart(2, '0')}</div><small class="text-cyan">SEC</small></div>
                 `;
             } else {
-                element.innerHTML = "<div class='alert alert-cyber mt-3'><i class='bi bi-megaphone-fill me-2'></i>EVENT HAS STARTED!</div>";
+                element.innerHTML = "<div class='alert alert-cyber mt-3'><i class='bi bi-megaphone-fill me-2'></i>EVENT IN PROGRESS</div>";
             }
         });
     }
     
     if (document.querySelector('.countdown')) {
         setInterval(updateCountdown, 1000);
-        updateCountdown();
+        updateCountdown(); // Initial call
     }
 
-    // 3. Card Hover Effects
+    // 4. Card Hover Effects
     const cards = document.querySelectorAll('.cyber-card, .cyber-card-orange, .member-card, .event-card');
     cards.forEach(card => {
         card.addEventListener('mouseenter', () => {
@@ -70,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 4. Panel Tab Highlighting Logic
+    // 5. Panel Tab Highlighting Logic
     const panelTabs = document.querySelectorAll('.panel-tab');
     panelTabs.forEach(tab => {
         tab.addEventListener('click', function() {
@@ -79,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 5. Form Validation with Enhanced Cyber Effects
+    // 6. Form Validation with Enhanced Cyber Feedback
     const forms = document.querySelectorAll('.cyber-form, form');
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -100,11 +109,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         input.parentNode.appendChild(feedback);
                     }
                     
-                    // Red Cyber Glitch Shadow
+                    // Red Cyber Glitch Shadow Effect
                     input.style.boxShadow = '0 0 10px #ff0000';
                     setTimeout(() => { input.style.boxShadow = ''; }, 1000);
                 } else {
                     input.classList.remove('is-invalid');
+                    // Remove feedback if field is now filled
+                    let feedback = input.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.remove();
+                    }
                 }
             });
             
@@ -124,11 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 6. Auto-hide Alerts
+    // 7. Auto-hide Alerts
     setTimeout(() => {
         document.querySelectorAll('.alert').forEach(alert => {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
+            if (alert.parentElement) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
         });
     }, 5000);
 });
