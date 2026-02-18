@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import FileExtensionValidator
+
+# from django.core.validators import FileExtensionValidator
 
 
 class Panel(models.Model):
@@ -27,7 +28,10 @@ class Member(models.Model):
         ("Organizing Secretary", "Organizing Secretary"),
         ("Assistant Organizing Secretary", "Assistant Organizing Secretary"),
         ("Media & Publication Secretary", "Media & Publication Secretary"),
-        ("Assistant Media & Publication Secretary", "Assistant Media & Publication Secretary"),
+        (
+            "Assistant Media & Publication Secretary",
+            "Assistant Media & Publication Secretary",
+        ),
         ("Executive Member", "Executive Member"),
         ("Member", "Member"),
     ]
@@ -41,16 +45,16 @@ class Member(models.Model):
     ]
 
     panel = models.ForeignKey(Panel, on_delete=models.CASCADE, related_name="members")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=50, choices=ROLES)
     department = models.CharField(max_length=20, choices=DEPARTMENTS, default="CSE")
     photo = models.ImageField(upload_to="members/", blank=True, null=True)
-    bio = models.TextField()
+    bio = models.TextField(blank=True)
     email = models.EmailField(blank=True)
     linkedin = models.URLField(blank=True)
     github = models.URLField(blank=True)
-    order = models.IntegerField(default=0)  # For custom ordering
+    order = models.IntegerField(default=0)
 
     class Meta:
         ordering = ["order", "name"]
@@ -78,7 +82,6 @@ class Event(models.Model):
         ("Ongoing", "Ongoing"),
         ("Completed", "Completed"),
     ]
-
     title = models.CharField(max_length=200)
     description = models.TextField()
     date = models.DateTimeField()
@@ -102,9 +105,10 @@ class UserProfile(models.Model):
         ("student", "Student"),
         ("guest", "Guest"),
     ]
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    user_type = models.CharField(max_length=20, choices=USER_TYPES)
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="userprofile"
+    )
+    user_type = models.CharField(max_length=20, choices=USER_TYPES, default="student")
     panel = models.ForeignKey(Panel, on_delete=models.SET_NULL, null=True, blank=True)
     student_id = models.CharField(max_length=50, blank=True)
     phone = models.CharField(max_length=20, blank=True)

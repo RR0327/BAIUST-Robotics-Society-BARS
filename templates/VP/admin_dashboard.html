@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="glow-text">Admin Dashboard</h1>
+            <p class="lead text-cyan">Welcome back, {{ user.username }}!</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-5">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ panels.count }}</h2>
+                <p class="mb-0">Total Panels</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ members.count }}</h2>
+                <p class="mb-0">Total Members</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ events.count }}</h2>
+                <p class="mb-0">Total Events</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ advisors.count }}</h2>
+                <p class="mb-0">Total Advisors</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="section-title">QUICK ACTIONS</h3>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/admin/VP/panel/add/" class="btn btn-cyber w-100 py-3">
+                <i class="bi bi-plus-circle me-2"></i>Add Panel
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/admin/VP/member/add/" class="btn btn-cyber w-100 py-3">
+                <i class="bi bi-person-plus me-2"></i>Add Member
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/admin/VP/event/add/" class="btn btn-cyber w-100 py-3">
+                <i class="bi bi-calendar-plus me-2"></i>Add Event
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/admin/VP/advisor/add/" class="btn btn-cyber w-100 py-3">
+                <i class="bi bi-person-badge me-2"></i>Add Advisor
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Members -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="section-title">RECENT MEMBERS</h3>
+        </div>
+        {% for member in members|slice:":4" %}
+        <div class="col-md-3 mb-3">
+            <div class="cyber-card p-3 text-center">
+                {% if member.photo %}
+                <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                     class="rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+                {% else %}
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2"
+                     style="width: 80px; height: 80px;">
+                    <i class="bi bi-person-fill fs-1"></i>
+                </div>
+                {% endif %}
+                <h6>{{ member.name }}</h6>
+                <small class="text-cyan">{{ member.role }}</small>
+                <p class="small text-muted">{{ member.panel.name }}</p>
+                <a href="/admin/VP/member/{{ member.id }}/change/" class="btn btn-sm btn-outline-cyber w-100">
+                    Edit
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Recent Events -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="section-title">UPCOMING EVENTS</h3>
+        </div>
+        {% for event in events|slice:":3" %}
+        {% if event.status == 'Upcoming' %}
+        <div class="col-md-4 mb-3">
+            <div class="cyber-card-orange p-3">
+                <h5>{{ event.title }}</h5>
+                <p class="small mb-2">
+                    <i class="bi bi-calendar me-1"></i>{{ event.date|date:"M d, Y - h:i A" }}
+                </p>
+                <p class="small mb-3">{{ event.description|truncatewords:15 }}</p>
+                <a href="/admin/VP/event/{{ event.id }}/change/" class="btn btn-sm btn-outline-cyber">
+                    Manage Event
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Admin Navigation -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="cyber-card p-4">
+                <h4 class="text-cyan mb-3">Admin Navigation</h4>
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/VP/panel/" class="btn btn-outline-cyber w-100">
+                            <i class="bi bi-layers me-2"></i>Manage Panels
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/VP/member/" class="btn btn-outline-cyber w-100">
+                            <i class="bi bi-people me-2"></i>Manage Members
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/VP/event/" class="btn btn-outline-cyber w-100">
+                            <i class="bi bi-calendar me-2"></i>Manage Events
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/VP/advisor/" class="btn btn-outline-cyber w-100">
+                            <i class="bi bi-person-badge me-2"></i>Manage Advisors
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

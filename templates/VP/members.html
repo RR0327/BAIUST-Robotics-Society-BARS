@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="glow-text mb-3">ALL MEMBERS</h1>
+            <p class="lead text-cyan">Complete list of all BARS members across all panels</p>
+        </div>
+    </div>
+
+    <!-- Member Statistics -->
+    <div class="row mb-5">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ members.count }}</h2>
+                <p class="mb-0">Total Members</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ panels.count }}</h2>
+                <p class="mb-0">Total Panels</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">
+                    {% for member in members %}
+                        {% if member.role == 'President' %}
+                            {% with president_count=1 %}
+                                {{ president_count }}
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </h2>
+                <p class="mb-0">Presidents</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="cyber-card text-center p-3">
+                <h2 class="text-cyan mb-2">{{ alumni_count|default:"0" }}</h2>
+                <p class="mb-0">Alumni</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Filter -->
+    <div class="cyber-card p-4 mb-5">
+        <form method="GET" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label text-cyan">Filter by Panel</label>
+                <select name="panel" class="form-select bg-dark text-light border-cyan" onchange="this.form.submit()">
+                    <option value="all" {% if selected_panel == 'all' %}selected{% endif %}>All Panels</option>
+                    {% for panel in panels %}
+                    <option value="{{ panel.id }}" {% if selected_panel == panel.id|stringformat:"i" %}selected{% endif %}>
+                        {{ panel.name }} ({{ panel.year }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label text-cyan">Filter by Role</label>
+                <select name="role" class="form-select bg-dark text-light border-cyan" onchange="this.form.submit()">
+                    <option value="all" {% if selected_role == 'all' %}selected{% endif %}>All Roles</option>
+                    <option value="President" {% if selected_role == 'President' %}selected{% endif %}>President</option>
+                    <option value="Vice President" {% if selected_role == 'Vice President' %}selected{% endif %}>Vice President</option>
+                    <option value="General Secretary" {% if selected_role == 'General Secretary' %}selected{% endif %}>General Secretary</option>
+                    <option value="Secretary" {% if selected_role == 'Secretary' %}selected{% endif %}>Secretary</option>
+                    <option value="Joint Secretary" {% if selected_role == 'Joint Secretary' %}selected{% endif %}>Joint Secretary</option>
+                    <option value="Treasurer" {% if selected_role == 'Treasurer' %}selected{% endif %}>Treasurer</option>
+                    <option value="Member" {% if selected_role == 'Member' %}selected{% endif %}>Member</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Members Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% for member in members %}
+        <div class="col">
+            <div class="cyber-card h-100 p-3 text-center 
+                {% if member.role == 'President' %}president-card{% endif %}">
+                
+                <div class="mb-3">
+                    {% if member.photo %}
+                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                         class="member-photo">
+                    {% else %}
+                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center mx-auto">
+                        <i class="bi bi-person-fill fs-1 text-light"></i>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <h5 class="fw-bold">{{ member.name }}</h5>
+                <span class="badge {% if member.role == 'President' %}bg-orange{% else %}bg-cyan{% endif %} rounded-pill mb-2">
+                    {{ member.role }}
+                </span>
+                
+                <p class="small text-white mb-1">
+                    <i class="bi bi-layers me-1"></i>{{ member.panel.name }}
+                </p>
+                
+                <p class="small text-white mb-3">{{ member.bio|truncatewords:10 }}</p>
+
+                <div class="d-flex justify-content-center gap-2 mt-auto">
+                    <button class="btn btn-sm btn-outline-cyber" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#memberModal{{ member.id }}">
+                        <i class="bi bi-eye me-1"></i>Profile
+                    </button>
+                    
+                    {% if member.email %}
+                    <a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-cyber">
+                        <i class="bi bi-envelope"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="cyber-card text-center py-5">
+                <i class="bi bi-people fs-1 text-cyan mb-3"></i>
+                <h4 class="mb-3">No Members Found</h4>
+                <p class="text-muted">No members match your filter criteria.</p>
+                <a href="{% url 'members' %}" class="btn btn-cyber">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Clear Filters
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Admin Actions -->
+    {% if user.is_authenticated and user.userprofile.user_type == 'admin' %}
+    <div class="cyber-card-orange p-4 mt-5">
+        <h4 class="text-orange mb-3">
+            <i class="bi bi-shield-lock me-2"></i>Admin Actions
+        </h4>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/admin/VP/member/add/" class="btn btn-outline-cyber">
+                <i class="bi bi-person-plus me-2"></i>Add New Member
+            </a>
+            <a href="/admin/VP/member/" class="btn btn-outline-cyber">
+                <i class="bi bi-gear me-2"></i>Manage All Members
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Member Modals -->
+{% for member in members %}
+<div class="modal fade" id="memberModal{{ member.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark-card border-cyan">
+            <div class="modal-header border-cyan">
+                <h5 class="modal-title">{{ member.name }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        {% if member.photo %}
+                        <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                             class="img-fluid rounded-circle border-cyan mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle border-cyan d-flex align-items-center justify-content-center mx-auto mb-3"
+                             style="width: 150px; height: 150px; background: rgba(0, 243, 255, 0.1);">
+                            <i class="bi bi-person-fill fs-1 text-cyan"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <h5 class="fw-bold">{{ member.name }}</h5>
+                        <span class="badge {% if member.role == 'President' %}bg-orange{% else %}bg-cyan{% endif %} mb-2">
+                            {{ member.role }}
+                        </span>
+                        <p class="small text-muted">{{ member.panel.name }} ({{ member.panel.year }})</p>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <h6 class="text-cyan mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Biography
+                        </h6>
+                        <p class="mb-4">{{ member.bio|linebreaks }}</p>
+                        
+                        <h6 class="text-cyan mb-3">
+                            <i class="bi bi-envelope me-2"></i>Contact Information
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if member.email %}
+                            <a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-cyber">
+                                <i class="bi bi-envelope me-1"></i>Email
+                            </a>
+                            {% endif %}
+                            {% if member.linkedin %}
+                            <a href="{{ member.linkedin }}" target="_blank" class="btn btn-sm btn-outline-cyber">
+                                <i class="bi bi-linkedin me-1"></i>LinkedIn
+                            </a>
+                            {% endif %}
+                            {% if member.github %}
+                            <a href="{{ member.github }}" target="_blank" class="btn btn-sm btn-outline-cyber">
+                                <i class="bi bi-github me-1"></i>GitHub
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-cyan">
+                <button type="button" class="btn btn-outline-cyber" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+    .president-card {
+        border: 2px solid var(--primary-orange);
+    }
+    
+    .president-card .member-photo {
+        border-color: var(--primary-orange);
+    }
+    
+    .president-card .badge {
+        background-color: var(--primary-orange) !important;
+        color: #000 !important;
+    }
+    
+    .bg-orange {
+        background-color: var(--primary-orange) !important;
+    }
+</style>
+{% endblock %}

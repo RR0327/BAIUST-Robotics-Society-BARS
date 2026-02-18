@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="cyber-card p-5 mx-auto" style="max-width: 500px; border-color: var(--primary-orange);">
+        <h2 class="glow-text-orange mb-4">SESSION TERMINATED</h2>
+        <div class="mb-4">
+            <i class="bi bi-shield-lock-fill text-orange" style="font-size: 4rem;"></i>
+        </div>
+        <p class="text-cyan mb-4">You have been securely logged out of the BARS system.</p>
+        
+        <div class="d-grid gap-2">
+            <a href="{% url 'login' %}" class="btn btn-cyber">
+                <i class="bi bi-arrow-repeat me-2"></i>RE-AUTHORIZE
+            </a>
+            <a href="{% url 'index' %}" class="btn btn-outline-cyber">
+                <i class="bi bi-house me-2"></i>RETURN TO MAIN DECK
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-redirect to home after 5 seconds
+    setTimeout(() => {
+        window.location.href = "{% url 'index' %}";
+    }, 5000);
+</script>
+{% endblock %}
