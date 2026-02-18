@@ -32,10 +32,19 @@ class Member(models.Model):
         ("Member", "Member"),
     ]
 
+    DEPARTMENTS = [
+        ("CSE", "Computer Science & Engineering"),
+        ("EEE", "Electrical & Electronic Engineering"),
+        ("CE", "Civil Engineering"),
+        ("BBA", "Business Administration"),
+        ("LAW", "Law"),
+    ]
+
     panel = models.ForeignKey(Panel, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=50, choices=ROLES)
+    department = models.CharField(max_length=20, choices=DEPARTMENTS, default="CSE")
     photo = models.ImageField(upload_to="members/", blank=True, null=True)
     bio = models.TextField()
     email = models.EmailField(blank=True)

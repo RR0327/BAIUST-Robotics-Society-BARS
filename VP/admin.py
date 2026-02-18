@@ -10,8 +10,8 @@ class PanelAdmin(admin.ModelAdmin):
 
 
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ["name", "role", "panel", "email", "order"]
-    list_filter = ["role", "panel"]
+    list_display = ["name", "role", "department", "panel", "email", "order"]
+    list_filter = ["role", "department", "panel"]
     search_fields = ["name", "email", "bio"]
     ordering = ["order", "name"]
     fieldsets = (
@@ -19,7 +19,7 @@ class MemberAdmin(admin.ModelAdmin):
             "fields": ("name", "email", "photo", "bio")
         }),
         ("Role & Panel", {
-            "fields": ("role", "panel", "order")
+            "fields": ("role", "panel", "department", "order")
         }),
         ("Social & Links", {
             "fields": ("linkedin", "github")
