@@ -21,7 +21,7 @@
 <!-- Featured Panels -->
 <section class="py-5">
     <div class="container">
-        <h2 class="section-title">EXECUTIVE PANELS</h2>
+        <h2 class="section-title">PANEL Information</h2>
         
         <!-- Panel Tabs -->
         <ul class="nav panel-tabs" id="panelTabs" role="tablist">
@@ -57,35 +57,205 @@
                     </div>
                 </div>
 
-                <!-- Members Grid -->
+                <!-- Members Grid - Ordered by Role Priority -->
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
-                    {% for member in panel.members.all|slice:":6" %}
-                    <div class="col">
-                        <div class="cyber-card h-100 p-3 text-center">
-                            {% if member.photo %}
-                            <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
-                                 class="member-photo">
-                            {% else %}
-                            <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
-                                <i class="bi bi-person-fill fs-1"></i>
+                    {% with panel.members.all as members %}
+                        <!-- First, show President -->
+                        {% for member in members %}
+                            {% if member.role == 'President' %}
+                            <div class="col">
+                                <div class="cyber-card h-100 p-3 text-center president-card">
+                                    {% if member.photo %}
+                                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                         class="member-photo">
+                                    {% else %}
+                                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person-fill fs-1"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-3">{{ member.name }}</h5>
+                                    <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                                    <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                                    
+                                    <div class="mt-auto">
+                                        <button class="btn btn-sm btn-outline-cyber" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#memberModal{{ member.id }}">
+                                            View Profile
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             {% endif %}
-                            
-                            <h5 class="mt-3">{{ member.name }}</h5>
-                            <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
-                            <p class="small">{{ member.bio|truncatewords:15 }}</p>
-                            
-                            <div class="mt-auto">
-                                <button class="btn btn-sm btn-outline-cyber" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#memberModal{{ member.id }}">
-                                    View Profile
-                                </button>
+                        {% endfor %}
+                        
+                        <!-- Then show Vice President -->
+                        {% for member in members %}
+                            {% if member.role == 'Vice President' %}
+                            <div class="col">
+                                <div class="cyber-card h-100 p-3 text-center">
+                                    {% if member.photo %}
+                                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                         class="member-photo">
+                                    {% else %}
+                                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person-fill fs-1"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-3">{{ member.name }}</h5>
+                                    <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                                    <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                                    
+                                    <div class="mt-auto">
+                                        <button class="btn btn-sm btn-outline-cyber" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#memberModal{{ member.id }}">
+                                            View Profile
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Then show General Secretary -->
+                        {% for member in members %}
+                            {% if member.role == 'General Secretary' or member.role == 'Secretary' %}
+                            <div class="col">
+                                <div class="cyber-card h-100 p-3 text-center">
+                                    {% if member.photo %}
+                                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                         class="member-photo">
+                                    {% else %}
+                                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person-fill fs-1"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-3">{{ member.name }}</h5>
+                                    <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                                    <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                                    
+                                    <div class="mt-auto">
+                                        <button class="btn btn-sm btn-outline-cyber" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#memberModal{{ member.id }}">
+                                            View Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Then show Joint Secretary -->
+                        {% for member in members %}
+                            {% if member.role == 'Joint Secretary' %}
+                            <div class="col">
+                                <div class="cyber-card h-100 p-3 text-center">
+                                    {% if member.photo %}
+                                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                         class="member-photo">
+                                    {% else %}
+                                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person-fill fs-1"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-3">{{ member.name }}</h5>
+                                    <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                                    <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                                    
+                                    <div class="mt-auto">
+                                        <button class="btn btn-sm btn-outline-cyber" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#memberModal{{ member.id }}">
+                                            View Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Then show Treasurer -->
+                        {% for member in members %}
+                            {% if member.role == 'Treasurer' %}
+                            <div class="col">
+                                <div class="cyber-card h-100 p-3 text-center">
+                                    {% if member.photo %}
+                                    <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                         class="member-photo">
+                                    {% else %}
+                                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person-fill fs-1"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-3">{{ member.name }}</h5>
+                                    <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                                    <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                                    
+                                    <div class="mt-auto">
+                                        <button class="btn btn-sm btn-outline-cyber" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#memberModal{{ member.id }}">
+                                            View Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Then show all other members (up to total of 6) -->
+                        {% with remaining_members=6 %}
+                            {% with count=0 %}
+                                {% for member in members %}
+                                    {% if member.role != 'President' and member.role != 'Vice President' and member.role != 'General Secretary' and member.role != 'Secretary' and member.role != 'Joint Secretary' and member.role != 'Treasurer' %}
+                                        {% if forloop.counter0 <= remaining_members %}
+                                        <div class="col">
+                                            <div class="cyber-card h-100 p-3 text-center">
+                                                {% if member.photo %}
+                                                <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                                     class="member-photo">
+                                                {% else %}
+                                                <div class="member-photo bg-secondary d-flex align-items-center justify-content-center">
+                                                    <i class="bi bi-person-fill fs-1"></i>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                <h5 class="mt-3">{{ member.name }}</h5>
+                                                <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
+                                                <p class="small">{{ member.bio|truncatewords:15 }}</p>
+                                                
+                                                <div class="mt-auto">
+                                                    <button class="btn btn-sm btn-outline-cyber" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#memberModal{{ member.id }}">
+                                                        View Profile
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        {% endwith %}
+                    {% endwith %}
                 </div>
+                
+                <!-- View Full Panel Button (Visible if there are more than 6 members) -->
+                {% if panel.members.all.count > 6 %}
+                <div class="text-center mt-4">
+                    <a href="{% url 'panel_detail' panel.id %}" class="btn btn-outline-cyber">
+                        <i class="bi bi-people-fill me-2"></i>View All {{ panel.members.all.count }} Members
+                    </a>
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -141,7 +311,9 @@
                             <span class="text-orange">
                                 <i class="bi bi-geo-alt me-1"></i>{{ event.location }}
                             </span>
-                            <a href="#" class="text-cyan">View Details →</a>
+                            <a href="{% url 'event_detail' event.id %}" class="text-cyan">
+                                View Details <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -171,10 +343,10 @@
                         <p class="card-text">{{ event.description|truncatewords:25 }}</p>
                         
                         <div class="mt-3">
-                            <a href="#" class="btn btn-sm btn-outline-cyber me-2">
+                            <a href="{% url 'event_detail' event.id %}?tab=photos" class="btn btn-sm btn-outline-cyber me-2">
                                 <i class="bi bi-images me-1"></i>Photos
                             </a>
-                            <a href="#" class="btn btn-sm btn-outline-cyber">
+                            <a href="{% url 'event_detail' event.id %}?tab=results" class="btn btn-sm btn-outline-cyber">
                                 <i class="bi bi-trophy me-1"></i>Results
                             </a>
                         </div>
@@ -185,7 +357,7 @@
         </div>
         
         <div class="text-center mt-4">
-            <a href="{% url 'events' %}" class="btn btn-cyber">
+            <a href="{% url 'events' %}?status=Completed" class="btn btn-cyber">
                 <i class="bi bi-archive me-2"></i>VIEW EVENT ARCHIVE
             </a>
         </div>
@@ -194,7 +366,7 @@
 
 <!-- Member Modals -->
 {% for panel in panels %}
-{% for member in panel.members.all|slice:":6" %}
+{% for member in panel.members.all %}
 <div class="modal fade" id="memberModal{{ member.id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark-card border-cyan">
@@ -207,6 +379,10 @@
                     {% if member.photo %}
                     <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
                          class="member-photo">
+                    {% else %}
+                    <div class="member-photo bg-secondary d-flex align-items-center justify-content-center mx-auto">
+                        <i class="bi bi-person-fill fs-1"></i>
+                    </div>
                     {% endif %}
                     <h6 class="text-orange mt-2">{{ member.role }}</h6>
                 </div>
@@ -240,5 +416,35 @@
 </div>
 {% endfor %}
 {% endfor %}
+
+<!-- Additional CSS for President Card Highlight -->
+<style>
+    .president-card {
+        border: 2px solid var(--primary-orange);
+        position: relative;
+    }
+    
+    .president-card::before {
+        content: '👑';
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        font-size: 24px;
+        background: var(--dark-bg);
+        border-radius: 50%;
+        padding: 5px;
+        border: 2px solid var(--primary-orange);
+        z-index: 10;
+    }
+    
+    .president-card .member-photo {
+        border-color: var(--primary-orange);
+    }
+    
+    .president-card .badge {
+        background-color: var(--primary-orange) !important;
+        color: #000 !important;
+    }
+</style>
 
 {% endblock %}
