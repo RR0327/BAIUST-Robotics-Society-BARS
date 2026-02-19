@@ -1,150 +1,190 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="container py-5">
-    <!-- Dashboard Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="glow-text">Admin Dashboard</h1>
-            <p class="lead text-cyan">Welcome back, {{ user.username }}!</p>
+            <h1 class="glow-text">ADMINISTRATIVE COMMAND CENTER</h1>
+            <p class="text-cyan">
+                COMMAND AUTHORIZATION: {{ user.username|upper }} | 
+                PANEL: {{ active_panel.year }} | 
+                STATUS: <span class="text-success">ENCRYPTED</span>
+            </p>
         </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="row mb-5">
-        <div class="col-md-3 col-6 mb-3">
-            <div class="cyber-card text-center p-3">
-                <h2 class="text-cyan mb-2">{{ panels.count }}</h2>
-                <p class="mb-0">Total Panels</p>
-            </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-            <div class="cyber-card text-center p-3">
-                <h2 class="text-cyan mb-2">{{ members.count }}</h2>
-                <p class="mb-0">Total Members</p>
-            </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-            <div class="cyber-card text-center p-3">
-                <h2 class="text-cyan mb-2">{{ events.count }}</h2>
-                <p class="mb-0">Total Events</p>
-            </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-            <div class="cyber-card text-center p-3">
-                <h2 class="text-cyan mb-2">{{ advisors.count }}</h2>
-                <p class="mb-0">Total Advisors</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
     <div class="row mb-5">
         <div class="col-12">
-            <h3 class="section-title">QUICK ACTIONS</h3>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="/admin/VP/panel/add/" class="btn btn-cyber w-100 py-3">
-                <i class="bi bi-plus-circle me-2"></i>Add Panel
-            </a>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="/admin/VP/member/add/" class="btn btn-cyber w-100 py-3">
-                <i class="bi bi-person-plus me-2"></i>Add Member
-            </a>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="/admin/VP/event/add/" class="btn btn-cyber w-100 py-3">
-                <i class="bi bi-calendar-plus me-2"></i>Add Event
-            </a>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="/admin/VP/advisor/add/" class="btn btn-cyber w-100 py-3">
-                <i class="bi bi-person-badge me-2"></i>Add Advisor
-            </a>
-        </div>
-    </div>
-
-    <!-- Recent Members -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h3 class="section-title">RECENT MEMBERS</h3>
-        </div>
-        {% for member in members|slice:":4" %}
-        <div class="col-md-3 mb-3">
-            <div class="cyber-card p-3 text-center">
-                {% if member.photo %}
-                <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
-                     class="rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
-                {% else %}
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2"
-                     style="width: 80px; height: 80px;">
-                    <i class="bi bi-person-fill fs-1"></i>
+            <div class="timer-section" style="border-color: var(--primary-orange); background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(0, 0, 0, 0.9));">
+                <div class="row align-items-center">
+                    <div class="col-lg-4 text-lg-start text-center mb-3 mb-lg-0">
+                        <h4 class="text-orange mb-1"><i class="bi bi-broadcast me-2"></i>NEXT OPERATION</h4>
+                        {% if upcoming_schedule %}
+                            <p class="text-white mb-0 fw-bold">{{ upcoming_schedule.0.title }}</p>
+                            <small class="help-text">{{ upcoming_schedule.0.location }}</small>
+                        {% else %}
+                            <p class="text-muted mb-0">No upcoming operations scheduled.</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-lg-8">
+                        {% if upcoming_schedule %}
+                            <div class="timer-display countdown mb-0" data-end="{{ upcoming_schedule.0.date|date:'Y-m-d H:i:s' }}">
+                                INITIALIZING CLOCK...
+                            </div>
+                        {% else %}
+                            <div class="timer-display mb-0 text-muted" style="opacity: 0.3;">00:00:00:00</div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
-                <h6>{{ member.name }}</h6>
-                <small class="text-cyan">{{ member.role }}</small>
-                <p class="small text-muted">{{ member.panel.name }}</p>
-                <a href="/admin/VP/member/{{ member.id }}/change/" class="btn btn-sm btn-outline-cyber w-100">
-                    Edit
-                </a>
             </div>
         </div>
-        {% endfor %}
     </div>
 
-    <!-- Recent Events -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="cyber-card p-4 border-cyan h-100">
+                <h4 class="text-cyan mb-4"><i class="bi bi-graph-up-arrow me-2"></i>PERSONNEL GROWTH TRENDS</h4>
+                <div style="height: 300px;">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="cyber-card p-4 h-100">
+                <h4 class="text-orange mb-4"><i class="bi bi-pie-chart-fill me-2"></i>QUICK ANALYTICS</h4>
+                <div class="d-grid gap-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="help-text">MEMBERS</span>
+                        <span class="badge bg-cyan text-dark">{{ total_members }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="help-text">TOTAL OPS</span>
+                        <span class="badge bg-cyan text-dark">{{ total_events }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="help-text">PENDING</span>
+                        <span class="badge bg-orange text-dark">{{ upcoming_ops }}</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-top border-secondary">
+                    <h6 class="text-cyan mb-3">DATA EXPORT TERMINAL</h6>
+                    <p class="small text-muted mb-3">Generate official BAIUST roster report:</p>
+                    <a href="{% url 'export_members_csv' %}" class="btn btn-outline-cyber w-100 btn-sm">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>EXPORT AS CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
-        <div class="col-12">
-            <h3 class="section-title">UPCOMING EVENTS</h3>
-        </div>
-        {% for event in events|slice:":3" %}
-        {% if event.status == 'Upcoming' %}
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card-orange p-3">
-                <h5>{{ event.title }}</h5>
-                <p class="small mb-2">
-                    <i class="bi bi-calendar me-1"></i>{{ event.date|date:"M d, Y - h:i A" }}
-                </p>
-                <p class="small mb-3">{{ event.description|truncatewords:15 }}</p>
-                <a href="/admin/VP/event/{{ event.id }}/change/" class="btn btn-sm btn-outline-cyber">
-                    Manage Event
-                </a>
+        <div class="col-lg-4 mb-4">
+            <div class="cyber-card p-4 h-100">
+                <h4 class="text-orange mb-4 border-bottom border-secondary pb-2">
+                    <i class="bi bi-cpu-fill me-2"></i>COMMAND LINKS
+                </h4>
+                <div class="d-grid gap-3">
+                    <a href="/admin/VP/panel/add/" class="btn btn-outline-cyber text-start">
+                        <i class="bi bi-plus-circle me-2"></i>INITIALIZE NEW PANEL
+                    </a>
+                    <a href="/admin/VP/event/add/" class="btn btn-outline-cyber text-start">
+                        <i class="bi bi-calendar-plus me-2"></i>DEPLOY NEW EVENT
+                    </a>
+                    <a href="/admin/VP/member/" class="btn btn-outline-cyber text-start">
+                        <i class="bi bi-people me-2"></i>MANAGE PERSONNEL
+                    </a>
+                </div>
             </div>
         </div>
-        {% endif %}
-        {% endfor %}
-    </div>
 
-    <!-- Admin Navigation -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="cyber-card p-4">
-                <h4 class="text-cyan mb-3">Admin Navigation</h4>
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <a href="/admin/VP/panel/" class="btn btn-outline-cyber w-100">
-                            <i class="bi bi-layers me-2"></i>Manage Panels
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="/admin/VP/member/" class="btn btn-outline-cyber w-100">
-                            <i class="bi bi-people me-2"></i>Manage Members
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="/admin/VP/event/" class="btn btn-outline-cyber w-100">
-                            <i class="bi bi-calendar me-2"></i>Manage Events
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="/admin/VP/advisor/" class="btn btn-outline-cyber w-100">
-                            <i class="bi bi-person-badge me-2"></i>Manage Advisors
-                        </a>
-                    </div>
+        <div class="col-lg-8 mb-4">
+            <div class="cyber-card p-4 h-100 border-cyan">
+                <h4 class="text-cyan mb-4 border-bottom border-secondary pb-2">
+                    <i class="bi bi-activity me-2"></i>SYSTEM LOG: RECENT ENTRIES
+                </h4>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr class="text-cyan small">
+                                <th>IDENTIFIER</th>
+                                <th>DESIGNATION</th>
+                                <th>PANEL</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in recent_registrations %}
+                            <tr>
+                                <td class="text-white fw-bold">{{ member.name }}</td>
+                                <td><span class="badge bg-dark border border-cyan text-cyan" style="font-size: 0.7rem;">{{ member.role }}</span></td>
+                                <td class="text-muted small">{{ member.panel.year }}</td>
+                                <td class="text-success small">AUTHORIZED</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No recent personnel records found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{{ chart_labels|json_script:"chart-labels-data" }}
+{{ chart_values|json_script:"chart-values-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Safely retrieve data from json_script tags
+    const labels = JSON.parse(document.getElementById('chart-labels-data').textContent) || [];
+    const values = JSON.parse(document.getElementById('chart-values-data').textContent) || [];
+
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(0, 243, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 243, 255, 0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Authorized Personnel',
+                data: values,
+                borderColor: '#00f3ff',
+                borderWidth: 3,
+                pointBackgroundColor: '#00f3ff',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }, 
+                    ticks: { color: '#00f3ff' },
+                    beginAtZero: true 
+                },
+                x: { 
+                    grid: { display: false }, 
+                    ticks: { color: '#00f3ff' } 
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+    .help-text { color: var(--neon-yellow) !important; font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
+    .table-hover tbody tr:hover { background-color: rgba(0, 243, 255, 0.05) !important; }
+</style>
 {% endblock %}

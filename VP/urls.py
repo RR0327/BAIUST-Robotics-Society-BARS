@@ -16,13 +16,15 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("profile/", views.user_profile, name="user_profile"),
     path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
-    # Password reset urls (optional)
+    path("export-members/", views.export_members_csv, name="export_members_csv"),
+    # Password reset urls (using Django's built-in auth views)
     path(
         "password-reset/",
         auth_views.PasswordResetView.as_view(
             template_name="VP/password_reset.html",
-            email_template_name="VP/password_reset_email.html",
+            email_template_name="VP/password_reset_email.html",  # Used as fallback/text
             subject_template_name="VP/password_reset_subject.txt",
+            html_email_template_name="VP/password_reset_email.html",  # CRITICAL: Send as HTML
         ),
         name="password_reset",
     ),

@@ -1,35 +1,54 @@
+import csv
+from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
 from django.contrib.auth import login, authenticate, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.db.models.functions import TruncMonth
+
 from .models import Panel, Member, Advisor, Event, UserProfile
 from .forms import RegistrationForm, UserUpdateForm, UserProfileForm
 
+# --- Helper Functions ---
+
+
+def is_admin(user):
+    """Helper to check if the user is authorized as admin."""
+    try:
+        return user.userprofile.user_type == "admin"
+    except:
+        return False
+
+
+# --- Public Views ---
+
 
 def index(request):
+    """Landing page with panel info and upcoming events."""
     panels = Panel.objects.all().order_by("-year")
     upcoming_events = Event.objects.filter(status__in=["Upcoming", "Ongoing"]).order_by(
         "date"
     )[:3]
     completed_events = Event.objects.filter(status="Completed").order_by("-date")[:3]
-    return render(
-        request,
-        "index.html",
-        {
-            "panels": panels,
-            "upcoming_events": upcoming_events,
-            "completed_events": completed_events,
-        },
-    )
+
+    context = {
+        "panels": panels,
+        "upcoming_events": upcoming_events,
+        "completed_events": completed_events,
+    }
+    return render(request, "index.html", context)
 
 
 def panels_view(request):
+    """View for displaying all panels."""
     return render(request, "VP/panels.html", {"panels": Panel.objects.all()})
 
 
 def panel_detail(request, panel_id):
+    """Detailed view for a specific panel roster."""
     panel = get_object_or_404(Panel, id=panel_id)
     return render(
         request,
@@ -39,16 +58,14 @@ def panel_detail(request, panel_id):
 
 
 def events_view(request):
+    """Searchable and filterable list of all events."""
     status_filter = request.GET.get("status", "all")
     search_query = request.GET.get("search", "")
-
     events = Event.objects.all()
 
-    # Apply status filter
     if status_filter != "all":
         events = events.filter(status=status_filter)
 
-    # Apply search filter
     if search_query:
         events = events.filter(
             Q(title__icontains=search_query)
@@ -56,39 +73,59 @@ def events_view(request):
             | Q(location__icontains=search_query)
         )
 
-    # Count events by status
-    upcoming_count = Event.objects.filter(status="Upcoming").count()
-    ongoing_count = Event.objects.filter(status="Ongoing").count()
-    completed_count = Event.objects.filter(status="Completed").count()
-
     context = {
         "events": events,
         "status_filter": status_filter,
         "search_query": search_query,
-        "upcoming_count": upcoming_count,
-        "ongoing_count": ongoing_count,
-        "completed_count": completed_count,
+        "upcoming_count": Event.objects.filter(status="Upcoming").count(),
+        "ongoing_count": Event.objects.filter(status="Ongoing").count(),
+        "completed_count": Event.objects.filter(status="Completed").count(),
     }
     return render(request, "VP/events.html", context)
 
 
 def event_detail(request, event_id):
+    """Detailed view for specific event operations."""
     event = get_object_or_404(Event, id=event_id)
     return render(request, "VP/event_detail.html", {"event": event})
 
 
 def advisors_view(request):
-    advisors = Advisor.objects.all()
-    return render(request, "VP/advisors.html", {"advisors": advisors})
+    """View for faculty advisors."""
+    return render(request, "VP/advisors.html", {"advisors": Advisor.objects.all()})
 
 
-# Advisor detail view
 def advisor_detail(request, advisor_id):
+    """Detailed view for a specific faculty advisor."""
     advisor = get_object_or_404(Advisor, id=advisor_id)
     return render(request, "VP/advisor_detail.html", {"advisor": advisor})
 
 
+def members_view(request):
+    """Filterable directory of all society members."""
+    members = Member.objects.all().select_related("panel")
+    selected_panel = request.GET.get("panel", "all")
+    selected_role = request.GET.get("role", "all")
+
+    if selected_panel != "all":
+        members = members.filter(panel_id=selected_panel)
+    if selected_role != "all":
+        members = members.filter(role=selected_role)
+
+    context = {
+        "members": members,
+        "panels": Panel.objects.all(),
+        "selected_panel": selected_panel,
+        "selected_role": selected_role,
+    }
+    return render(request, "VP/members.html", context)
+
+
+# --- Authentication Views ---
+
+
 def register_view(request):
+    """Handles new user registration and profile initialization."""
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -108,17 +145,15 @@ def register_view(request):
 
 
 def login_view(request):
+    """Handles terminal access for authorized users."""
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
-            try:
-                if user.userprofile.user_type == "admin":
-                    return redirect("admin_dashboard")
-            except UserProfile.DoesNotExist:
-                pass
+            if is_admin(user):
+                return redirect("admin_dashboard")
             return redirect("index")
     else:
         form = AuthenticationForm()
@@ -126,40 +161,15 @@ def login_view(request):
 
 
 def logout_view(request):
-    """
-    Handles user logout, flushes session data,
-    and redirects to the landing page.
-    """
+    """Terminates session and clears local data."""
     auth_logout(request)
     messages.success(request, "LOGOUT SUCCESSFUL. SESSION TERMINATED.")
     return redirect("index")
 
 
-def is_admin(user):
-    try:
-        return user.userprofile.user_type == "admin"
-    except:
-        return False
-
-
-@login_required
-@user_passes_test(
-    lambda u: hasattr(u, "userprofile") and u.userprofile.user_type == "admin"
-)
-def admin_dashboard(request):
-    return render(
-        request,
-        "VP/admin_dashboard.html",
-        {
-            "panels": Panel.objects.all(),
-            "events": Event.objects.all(),
-            "members": Member.objects.all(),
-        },
-    )
-
-
 @login_required
 def user_profile(request):
+    """User management console for personal data updates."""
     try:
         profile = request.user.userprofile
     except UserProfile.DoesNotExist:
@@ -168,7 +178,6 @@ def user_profile(request):
     if request.method == "POST":
         form = UserUpdateForm(request.POST, instance=request.user)
         profile_form = UserProfileForm(request.POST, instance=profile)
-
         if form.is_valid() and profile_form.is_valid():
             form.save()
             profile_form.save()
@@ -183,25 +192,63 @@ def user_profile(request):
     )
 
 
-def members_view(request):
-    """View for displaying all members"""
-    members = Member.objects.all().select_related("panel")
-    panels = Panel.objects.all()
+# --- Administrative Terminal Views ---
 
-    # Get filter parameters
-    selected_panel = request.GET.get("panel", "all")
-    selected_role = request.GET.get("role", "all")
 
-    # Apply filters
-    if selected_panel != "all":
-        members = members.filter(panel_id=selected_panel)
-    if selected_role != "all":
-        members = members.filter(role=selected_role)
+@login_required
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    """
+    Administrative Command Deck.
+    Includes Growth Analytics, Operational Timers, and System Logs.
+    """
+    panels = Panel.objects.all().order_by("-year")
+    members = Member.objects.all()
+    events = Event.objects.all()
+
+    # 1. Growth Chart Analytics (Last 6 Months)
+    six_months_ago = datetime.now() - timedelta(days=180)
+    growth_data = (
+        UserProfile.objects.filter(created_at__gte=six_months_ago)
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(total=Count("id"))
+        .order_by("month")
+    )
+
+    chart_labels = [d["month"].strftime("%b %Y") for d in growth_data]
+    chart_values = [d["total"] for d in growth_data]
+
+    # 2. Operational Awareness
+    upcoming_schedule = events.filter(status="Upcoming").order_by("date")
 
     context = {
-        "members": members,
         "panels": panels,
-        "selected_panel": selected_panel,
-        "selected_role": selected_role,
+        "total_members": members.count(),
+        "total_events": events.count(),
+        "upcoming_ops": upcoming_schedule.count(),
+        "active_panel": panels.first() if panels.exists() else None,
+        "recent_registrations": members.order_by("-id")[:5],
+        "upcoming_schedule": upcoming_schedule[:5],
+        "chart_labels": chart_labels,
+        "chart_values": chart_values,
     }
-    return render(request, "VP/members.html", context)
+    return render(request, "VP/admin_dashboard.html", context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def export_members_csv(request):
+    """Generates a CSV report of society roster for official use."""
+    response = HttpResponse(content_type="text/csv")
+    filename = f"BARS_Roster_{datetime.now().strftime('%Y-%m-%d')}.csv"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(["FULL NAME", "DESIGNATION", "PANEL YEAR", "CONTACT EMAIL"])
+
+    members = Member.objects.all().select_related("panel")
+    for m in members:
+        writer.writerow([m.name, m.role, m.panel.year, m.email])
+
+    return response

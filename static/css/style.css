@@ -2,6 +2,7 @@
 :root {
     --primary-cyan: #00f3ff;
     --primary-orange: #ff6b00;
+    --neon-yellow: #ccff00; /* High contrast color for help text visibility */
     --dark-bg: #0a0a0a;
     --dark-card: #111111;
     --darker-card: #0d0d0d;
@@ -51,9 +52,7 @@ main.container-fluid {
     box-shadow: var(--neon-glow);
 }
 
-.navbar-brand {
-    font-family: 'Orbitron', sans-serif;
-}
+.navbar-brand { font-family: 'Orbitron', sans-serif; }
 
 .nav-link {
     font-family: 'Share Tech Mono', monospace;
@@ -70,17 +69,15 @@ main.container-fluid {
     box-shadow: var(--neon-glow);
 }
 
-.nav-link.active.glow {
-    background: rgba(0, 243, 255, 0.1);
-}
+.nav-link.active.glow { background: rgba(0, 243, 255, 0.1); }
 
-/* --- Cyber Buttons --- */
+/* --- Cyber UI Components --- */
 .btn-cyber {
     background: linear-gradient(45deg, var(--primary-cyan), var(--primary-orange));
     color: #000 !important;
+    font-weight: bold;
     border: none;
     padding: 0.5rem 1.5rem;
-    font-weight: bold;
     border-radius: 5px;
     transition: all 0.3s ease;
 }
@@ -112,18 +109,14 @@ main.container-fluid {
     overflow: hidden;
 }
 
-.cyber-card-orange, .event-card {
-    border-color: var(--primary-orange);
-}
+.cyber-card-orange, .event-card { border-color: var(--primary-orange); }
 
 .cyber-card:hover, .member-card:hover {
     transform: translateY(-10px);
     box-shadow: var(--neon-glow);
 }
 
-.cyber-card-orange:hover, .event-card:hover {
-    box-shadow: var(--orange-glow);
-}
+.cyber-card-orange:hover, .event-card:hover { box-shadow: var(--orange-glow); }
 
 /* --- Member & Event Specifics --- */
 .member-photo {
@@ -175,22 +168,63 @@ main.container-fluid {
     text-shadow: var(--neon-glow);
 }
 
-/* --- Forms --- */
+/* --- Forms & CRITICAL Visibility Fixes --- */
 .cyber-form {
-    background: var(--dark-card);
+    background: linear-gradient(135deg, rgba(10, 20, 30, 0.95), rgba(0, 0, 0, 0.98)) !important;
     border: 2px solid var(--primary-cyan);
     border-radius: 10px;
     padding: 2rem;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+}
+
+.form-label {
+    color: var(--primary-cyan) !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
 }
 
 .form-control {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: #000000 !important; /* Solid black for contrast */
     border: 1px solid var(--primary-cyan) !important;
-    color: white !important;
+    color: #ffffff !important; /* Pure white text */
+    border-radius: 5px;
+    padding: 0.75rem;
 }
 
 .form-control:focus {
     box-shadow: var(--neon-glow) !important;
+    background: #050505 !important;
+}
+
+/* FIXED: HELP TEXT VISIBILITY (Hints below inputs) */
+.form-text, 
+.cyber-form small, 
+.help-text,
+.cyber-form .text-muted,
+.cyber-form .text-white {
+    color: var(--neon-yellow) !important; /* Neon Yellow for maximum legibility */
+    opacity: 1 !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    display: block !important;
+    margin-top: 0.5rem !important;
+    text-shadow: 1px 1px 2px #000 !important;
+}
+
+/* Password Validation Lists */
+.cyber-form ul {
+    color: var(--neon-yellow) !important;
+    font-size: 0.8rem !important;
+    padding-left: 1.2rem !important;
+}
+
+/* Error visibility */
+.text-danger {
+    color: #ff3e3e !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
 }
 
 /* --- Hero Section --- */
@@ -232,9 +266,7 @@ body::before {
     box-shadow: var(--neon-glow);
 }
 
-.btn-close-white {
-    filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg);
-}
+.btn-close-white { filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg); }
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {

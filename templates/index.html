@@ -47,7 +47,7 @@
                     </div>
                     <div class="col-lg-4 text-lg-end">
                         <a href="{% url 'panel_detail' panel.id %}" class="btn btn-outline-cyber">
-                            View Full Details <i class="bi bi-arrow-right ms-2"></i>
+                            View Full Roster <i class="bi bi-arrow-right ms-2"></i>
                         </a>
                     </div>
                 </div>
@@ -154,11 +154,11 @@
                     {% endwith %}
                 </div>
                 
-                <!-- <div class="text-center mt-5">
+                <div class="text-center mt-5">
                     <a href="{% url 'panel_detail' panel.id %}" class="btn btn-cyber btn-lg">
                         <i class="bi bi-people-fill me-2"></i>Full Panel ({{ panel.members.count }})
                     </a>
-                </div> -->
+                </div>
             </div>
             {% endfor %}
         </div>
