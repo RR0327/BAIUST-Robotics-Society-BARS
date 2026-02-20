@@ -16,7 +16,7 @@ class MemberAdmin(admin.ModelAdmin):
     ordering = ["order", "name"]
     fieldsets = (
         ("Personal Information", {
-            "fields": ("name", "email", "photo", "bio")
+            "fields": ("name", "fathers_name", "email", "photo", "bio")
         }),
         ("Role & Panel", {
             "fields": ("role", "panel", "department", "order")

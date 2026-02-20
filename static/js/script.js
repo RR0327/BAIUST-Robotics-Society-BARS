@@ -138,7 +138,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 7. Auto-hide Alerts
+    // 7. Password Visibility Toggle
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const passwordInput = document.getElementById('id_password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    }
+
+    // 8. Auto-hide Alerts
     setTimeout(() => {
         document.querySelectorAll('.alert').forEach(alert => {
             if (alert.parentElement) {

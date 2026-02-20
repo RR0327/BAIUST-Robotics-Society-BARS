@@ -8,17 +8,17 @@
                 <div class="text-center mb-4">
                     <h2 class="glow-text">ACCESS TERMINAL</h2>
                     <p class="text-cyan">Authorize member credentials</p>
-                    
+
                     <div class="d-flex justify-content-center align-items-center mb-3">
                         <div class="p-2 rounded-circle bg-cyan me-2 status-pulse"></div>
                         <div class="p-2 rounded-circle bg-cyan me-2 status-pulse" style="animation-delay: 0.2s;"></div>
                         <div class="p-2 rounded-circle bg-cyan status-pulse" style="animation-delay: 0.4s;"></div>
                     </div>
                 </div>
-                
+
                 <form method="POST" class="cyber-form">
                     {% csrf_token %}
-                    
+
                     {% if messages or form.errors %}
                     <div class="mb-4">
                         {% for message in messages %}
@@ -27,7 +27,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                         {% endfor %}
-                        
+
                         {% if form.non_field_errors %}
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <i class="bi bi-exclamation-triangle-fill me-2"></i>Invalid Credentials
@@ -36,7 +36,7 @@
                         {% endif %}
                     </div>
                     {% endif %}
-                    
+
                     <div class="mb-4">
                         <label for="id_username" class="form-label">
                             <i class="bi bi-person-fill text-cyan me-2"></i>Username
@@ -48,7 +48,7 @@
                             {{ form.username }}
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label for="id_password" class="form-label">
                             <i class="bi bi-key-fill text-cyan me-2"></i>Password
@@ -63,7 +63,7 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="remember_me" id="rememberMe">
@@ -73,33 +73,37 @@
                             <i class="bi bi-question-circle me-1"></i>Reset Password?
                         </a>
                     </div>
-                    
+
                     <button type="submit" id="auth-btn" class="btn btn-cyber w-100 py-3 mb-3">
                         <i class="bi bi-shield-lock me-2"></i>AUTHORIZE LOGIN
                     </button>
-                    
+
                     <div class="accordion mb-4" id="demoAccounts">
                         <div class="accordion-item border-cyan bg-dark">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark text-cyan py-2" type="button" 
-                                        data-bs-toggle="collapse" data-bs-target="#demoDetails">
+                            {% comment %} <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark text-cyan py-2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#demoDetails">
                                     <i class="bi bi-code-slash me-2"></i>Demo Access
                                 </button>
-                            </h2>
-                            <div id="demoDetails" class="accordion-collapse collapse" data-bs-parent="#demoAccounts">
+                            </h2> {% endcomment %}
+                            {% comment %} <div id="demoDetails" class="accordion-collapse collapse"
+                                data-bs-parent="#demoAccounts">
                                 <div class="accordion-body py-2">
                                     <small class="text-muted d-block mb-2">Click to auto-fill:</small>
                                     <div class="d-grid gap-2">
-                                        <code class="demo-credential" data-user="admin" data-pass="admin123">admin:admin123 (Admin)</code>
-                                        <code class="demo-credential" data-user="rakib" data-pass="rakib123">rakib:rakib123 (Member)</code>
+                                        <code class="demo-credential" data-user="admin"
+                                            data-pass="admin123">admin:admin123 (Admin)</code>
+                                        <code class="demo-credential" data-user="rakib"
+                                            data-pass="rakib123">rakib:rakib123 (Member)</code>
                                     </div>
                                 </div>
-                            </div>
+                            </div> {% endcomment %}
                         </div>
                     </div>
 
                     <div class="text-center">
-                        <p class="mb-0">New user? <a href="{% url 'register' %}" class="text-cyan text-decoration-none ms-1">Create Account</a></p>
+                        <p class="mb-0">New user? <a href="{% url 'register' %}"
+                                class="text-cyan text-decoration-none ms-1">Create Account</a></p>
                     </div>
                 </form>
             </div>
@@ -110,68 +114,130 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Password Visibility Toggle
-    const toggleBtn = document.getElementById('togglePassword');
-    const passField = document.querySelector('input[type="password"]');
-    
-    if (toggleBtn && passField) {
-        toggleBtn.addEventListener('click', function() {
-            const isPass = passField.getAttribute('type') === 'password';
-            passField.setAttribute('type', isPass ? 'text' : 'password');
-            this.querySelector('i').className = isPass ? 'bi bi-eye-slash' : 'bi bi-eye';
-            this.classList.toggle('btn-cyber');
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        // Find toggle button
+        const toggleBtn = document.getElementById('togglePassword');
 
-    // 2. Demo Auto-fill Logic
-    const demoCodes = document.querySelectorAll('.demo-credential');
-    demoCodes.forEach(code => {
-        code.addEventListener('click', function() {
-            document.querySelector('input[name="username"]').value = this.dataset.user;
-            document.querySelector('input[name="password"]').value = this.dataset.pass;
-            
-            // Visual feedback
-            const originalText = this.innerText;
-            this.innerText = "CREDENTIALS LOADED";
-            this.style.color = "var(--primary-cyan)";
-            setTimeout(() => { 
-                this.innerText = originalText;
-                this.style.color = "";
-            }, 1500);
-        });
-    });
+        // More robust way to find the password input:
+        // 1) try the standard Django id, 2) fallback to input[name="password"], 3) fallback to any password input
+        let passField = document.getElementById('id_password')
+            || document.querySelector('input[name="password"]')
+            || document.querySelector('input[type="password"]');
 
-    // 3. Login Pulse Animation on Submit
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function() {
-        const btn = document.getElementById('auth-btn');
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>AUTHENTICATING...';
-        btn.style.pointerEvents = 'none';
-        
-        const card = document.querySelector('.cyber-card');
-        card.style.animation = 'terminalGlow 1.5s infinite';
+        // Attach toggle handler if both exist
+        if (toggleBtn && passField) {
+            toggleBtn.addEventListener('click', function (e) {
+                e.preventDefault(); // safe-guard — button type="button" already, but prevents accidental effects
+                // Use the .type property (more reliable than setAttribute/getAttribute)
+                const isPass = passField.type === 'password';
+                passField.type = isPass ? 'text' : 'password';
+
+                // Swap icon classes cleanly
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('bi-eye');
+                    icon.classList.toggle('bi-eye-slash');
+                }
+
+                // Toggle button visual state (preserve your styling toggle)
+                this.classList.toggle('btn-cyber');
+            });
+        }
+
+        // Demo Auto-fill Logic (guarded — safe if element list is empty)
+        const demoCodes = document.querySelectorAll('.demo-credential');
+        if (demoCodes.length) {
+            demoCodes.forEach(code => {
+                code.addEventListener('click', function () {
+                    const userInput = document.querySelector('input[name="username"]');
+                    const passInput = document.querySelector('input[name="password"]') || passField;
+                    if (userInput) userInput.value = this.dataset.user || '';
+                    if (passInput) passInput.value = this.dataset.pass || '';
+
+                    // Visual feedback
+                    const originalText = this.innerText;
+                    this.innerText = "CREDENTIALS LOADED";
+                    this.style.color = "var(--primary-cyan)";
+                    setTimeout(() => {
+                        this.innerText = originalText;
+                        this.style.color = "";
+                    }, 1500);
+                });
+            });
+        }
+
+        // Login Pulse Animation on Submit (guarded)
+        const form = document.querySelector('form.cyber-form') || document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                const btn = document.getElementById('auth-btn');
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>AUTHENTICATING...';
+                    btn.style.pointerEvents = 'none';
+                }
+                const card = document.querySelector('.cyber-card');
+                if (card) card.style.animation = 'terminalGlow 1.5s infinite';
+            });
+        }
     });
-});
 </script>
 
 <style>
     /* Status indicators */
-    .status-pulse { animation: statusPulse 2s infinite; opacity: 0.3; }
-    @keyframes statusPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    .status-pulse {
+        animation: statusPulse 2s infinite;
+        opacity: 0.3;
+    }
+
+    @keyframes statusPulse {
+
+        0%,
+        100% {
+            opacity: 0.3;
+        }
+
+        50% {
+            opacity: 1;
+        }
+    }
 
     /* Login Glow */
     @keyframes terminalGlow {
-        0% { box-shadow: 0 0 10px var(--primary-cyan); }
-        50% { box-shadow: 0 0 25px var(--primary-cyan), 0 0 15px var(--primary-orange); }
-        100% { box-shadow: 0 0 10px var(--primary-cyan); }
+        0% {
+            box-shadow: 0 0 10px var(--primary-cyan);
+        }
+
+        50% {
+            box-shadow: 0 0 25px var(--primary-cyan), 0 0 15px var(--primary-orange);
+        }
+
+        100% {
+            box-shadow: 0 0 10px var(--primary-cyan);
+        }
     }
 
     /* Spinner */
-    .spin { animation: spin 1s linear infinite; display: inline-block; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .spin {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
 
-    .demo-credential { cursor: pointer; padding: 5px; border-radius: 4px; transition: all 0.2s; }
-    .demo-credential:hover { background: rgba(0, 243, 255, 0.15); box-shadow: 0 0 5px var(--primary-cyan); }
+    @keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .demo-credential {
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .demo-credential:hover {
+        background: rgba(0, 243, 255, 0.15);
+        box-shadow: 0 0 5px var(--primary-cyan);
+    }
 </style>
 {% endblock %}

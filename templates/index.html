@@ -68,7 +68,7 @@
                                     {% endif %}
                                     <h5 class="mt-3">{{ member.name }}</h5>
                                     <span class="badge bg-orange rounded-pill mb-2">{{ member.role }}</span>
-                                    <p class="small">{{ member.bio|truncatewords:10 }}</p>
+                                    <p class="small">{{ member.bio|linebreaks|truncatewords:10 }}</p>
                                     <div class="mt-auto">
                                         <button class="btn btn-sm btn-outline-cyber w-100" data-bs-toggle="modal" data-bs-target="#memberModal{{ member.id }}">
                                             VIEW PROFILE
@@ -92,7 +92,7 @@
                                     {% endif %}
                                     <h5 class="mt-3">{{ member.name }}</h5>
                                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
-                                    <p class="small">{{ member.bio|truncatewords:10 }}</p>
+                                    <p class="small">{{ member.bio|linebreaks|truncatewords:10 }}</p>
                                     <div class="mt-auto">
                                         <button class="btn btn-sm btn-outline-cyber w-100" data-bs-toggle="modal" data-bs-target="#memberModal{{ member.id }}">
                                             VIEW PROFILE
@@ -116,7 +116,7 @@
                                     {% endif %}
                                     <h5 class="mt-3">{{ member.name }}</h5>
                                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
-                                    <p class="small">{{ member.bio|truncatewords:10 }}</p>
+                                    <p class="small">{{ member.bio|linebreaks|truncatewords:10 }}</p>
                                     <div class="mt-auto">
                                         <button class="btn btn-sm btn-outline-cyber w-100" data-bs-toggle="modal" data-bs-target="#memberModal{{ member.id }}">
                                             VIEW PROFILE
@@ -140,7 +140,7 @@
                                     {% endif %}
                                     <h5 class="mt-3">{{ member.name }}</h5>
                                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
-                                    <p class="small">{{ member.bio|truncatewords:10 }}</p>
+                                    <p class="small">{{ member.bio|linebreaks|truncatewords:10 }}</p>
                                     <div class="mt-auto">
                                         <button class="btn btn-sm btn-outline-cyber w-100" data-bs-toggle="modal" data-bs-target="#memberModal{{ member.id }}">
                                             VIEW PROFILE
@@ -210,44 +210,77 @@
 
 {% for panel in panels %}
     {% for member in panel.members.all %}
-    <div class="modal fade" id="memberModal{{ member.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="memberModal{{ member.id }}" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content bg-dark-card border-cyan">
                 <div class="modal-header border-cyan">
-                    <h5 class="modal-title glow-text">{{ member.name }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title text-white">{{ member.name }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row align-items-center">
+                    <div class="row">
+                        <!-- Left Column - Photo & Basic Info -->
                         <div class="col-md-4 text-center mb-3 mb-md-0">
                             {% if member.photo %}
-                            <img src="{{ member.photo.url }}" class="img-fluid rounded-circle border-cyan mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                            <img src="{{ member.photo.url }}" alt="{{ member.name }}" 
+                                 class="img-fluid rounded-circle border-cyan mb-3"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
                             {% else %}
-                            <div class="rounded-circle border-cyan d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px; background: rgba(0, 243, 255, 0.1);">
+                            <div class="rounded-circle border-cyan d-flex align-items-center justify-content-center mx-auto mb-3"
+                                 style="width: 150px; height: 150px; background: rgba(0, 243, 255, 0.1);">
                                 <i class="bi bi-person-fill fs-1 text-cyan"></i>
                             </div>
                             {% endif %}
-                            <h5 class="fw-bold">{{ member.name }}</h5>
-                            <span class="badge {% if member.role == 'President' %}bg-orange{% else %}bg-cyan{% endif %} mb-2 text-dark">{{ member.role }}</span>
-                            <p class="small text-muted">{{ panel.name }}</p>
-                        </div>
-                        <div class="col-md-8">
-                            <h6 class="text-cyan mb-2"><i class="bi bi-info-circle me-2"></i>PERSONNEL BIO</h6>
-                            <p class="small">{{ member.bio|linebreaks }}</p>
                             
-                            {% if member.email or member.linkedin or member.github %}
-                            <h6 class="text-cyan mt-4 mb-2"><i class="bi bi-link-45deg me-2"></i>EXTERNAL LINKS</h6>
-                            <div class="d-flex gap-2">
-                                {% if member.email %}<a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-cyber"><i class="bi bi-envelope"></i></a>{% endif %}
-                                {% if member.linkedin %}<a href="{{ member.linkedin }}" target="_blank" class="btn btn-sm btn-outline-cyber"><i class="bi bi-linkedin"></i></a>{% endif %}
-                                {% if member.github %}<a href="{{ member.github }}" target="_blank" class="btn btn-sm btn-outline-cyber"><i class="bi bi-github"></i></a>{% endif %}
-                            </div>
+                            <h5 class="fw-bold">{{ member.name }}</h5>
+                            <span class="badge {% if member.role == 'President' %}bg-orange{% else %}bg-cyan{% endif %} mb-2">
+                                {{ member.role }}
+                            </span>
+                            {% if member.email %}
+                            <p class="small text-white">{{ member.email }}</p>
                             {% endif %}
+                            <p class="small text-white">{{ panel.name }} ({{ panel.year }})</p>
+                        </div>
+                        
+                        <!-- Right Column - Bio & Contact -->
+                        <div class="col-md-8">
+                            <h6 class="text-cyan mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Biography
+                            </h6>
+                            <p class="mb-4">{{ member.bio|linebreaks }}</p>
+                            
+                            {% if member.fathers_name %}
+                            <h6 class="text-cyan mb-3">
+                                <i class="bi bi-person me-2"></i>Father's Name
+                            </h6>
+                            <p class="mb-4">{{ member.fathers_name }}</p>
+                            {% endif %}
+                            
+                            <h6 class="text-cyan mb-3">
+                                <i class="bi bi-envelope me-2"></i>Contact Information
+                            </h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if member.email %}
+                                <a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-cyber">
+                                    <i class="bi bi-envelope me-1"></i>Email
+                                </a>
+                                {% endif %}
+                                {% if member.linkedin %}
+                                <a href="{{ member.linkedin }}" target="_blank" class="btn btn-sm btn-outline-cyber">
+                                    <i class="bi bi-linkedin me-1"></i>LinkedIn
+                                </a>
+                                {% endif %}
+                                {% if member.github %}
+                                <a href="{{ member.github }}" target="_blank" class="btn btn-sm btn-outline-cyber">
+                                    <i class="bi bi-github me-1"></i>GitHub
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-cyan">
-                    <button type="button" class="btn btn-outline-cyber" data-bs-dismiss="modal">DISMISS</button>
+                    <button type="button" class="btn btn-outline-cyber" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

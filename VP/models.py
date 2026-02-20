@@ -47,6 +47,7 @@ class Member(models.Model):
     panel = models.ForeignKey(Panel, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=100)
+    fathers_name = models.CharField(max_length=100, null=True, blank=True)
     role = models.CharField(max_length=50, choices=ROLES)
     department = models.CharField(max_length=20, choices=DEPARTMENTS, default="CSE")
     photo = models.ImageField(upload_to="members/", blank=True, null=True)

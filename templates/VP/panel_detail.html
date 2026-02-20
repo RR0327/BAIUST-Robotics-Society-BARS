@@ -65,7 +65,7 @@
                     <h5 class="fw-bold">{{ member.name }}</h5>
                     <span class="badge bg-orange rounded-pill mb-2">{{ member.role }}</span>
                     
-                    <p class="small text-muted mb-3">{{ member.bio|truncatewords:15 }}</p>
+                    <p class="small text-white mb-3">{{ member.bio|linebreaks|truncatewords_html:15 }}</p>
 
                     <div class="d-flex justify-content-center gap-2 mt-auto">
                         <button class="btn btn-sm btn-outline-cyber" 
@@ -104,7 +104,7 @@
                     <h5 class="fw-bold">{{ member.name }}</h5>
                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
                     
-                    <p class="small text-muted mb-3">{{ member.bio|truncatewords:15 }}</p>
+                    <p class="small text-white mb-3">{{ member.bio|linebreaks|truncatewords_html:15 }}</p>
 
                     <div class="d-flex justify-content-center gap-2 mt-auto">
                         <button class="btn btn-sm btn-outline-cyber" 
@@ -143,7 +143,7 @@
                     <h5 class="fw-bold">{{ member.name }}</h5>
                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
                     
-                    <p class="small text-muted mb-3">{{ member.bio|truncatewords:15 }}</p>
+                    <p class="small text-white mb-3">{{ member.bio|linebreaks|truncatewords_html:15 }}</p>
 
                     <div class="d-flex justify-content-center gap-2 mt-auto">
                         <button class="btn btn-sm btn-outline-cyber" 
@@ -182,7 +182,7 @@
                     <h5 class="fw-bold">{{ member.name }}</h5>
                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
                     
-                    <p class="small text-muted mb-3">{{ member.bio|truncatewords:15 }}</p>
+                    <p class="small text-white mb-3">{{ member.bio|linebreaks|truncatewords_html:15 }}</p>
 
                     <div class="d-flex justify-content-center gap-2 mt-auto">
                         <button class="btn btn-sm btn-outline-cyber" 
@@ -221,7 +221,7 @@
                     <h5 class="fw-bold">{{ member.name }}</h5>
                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
                     
-                    <p class="small text-muted mb-3">{{ member.bio|truncatewords:15 }}</p>
+                    <p class="small text-white mb-3">{{ member.bio|linebreaks|truncatewords_html:15 }}</p>
 
                     <div class="d-flex justify-content-center gap-2 mt-auto">
                         <button class="btn btn-sm btn-outline-cyber" 
@@ -260,7 +260,7 @@
                     <h5 class="fw-bold">{{ member.name }}</h5>
                     <span class="badge bg-cyan rounded-pill mb-2">{{ member.role }}</span>
                     
-                    <p class="small text-muted mb-3">{{ member.bio|truncatewords:15 }}</p>
+                    <p class="small text-white mb-3">{{ member.bio|linebreaks|truncatewords_html:15 }}</p>
 
                     <div class="d-flex justify-content-center gap-2 mt-auto">
                         <button class="btn btn-sm btn-outline-cyber" 
@@ -333,15 +333,13 @@
                         {% endif %}
                         
                         <h5 class="fw-bold">{{ member.name }}</h5>
-                        <span class="badge {% if member.role == 'President' %}bg-orange{% else %}bg-cyan{% endif %} mb-3">
+                        <span class="badge {% if member.role == 'President' %}bg-orange{% else %}bg-cyan{% endif %} mb-2">
                             {{ member.role }}
                         </span>
-                        
                         {% if member.email %}
                         <p class="small text-white">{{ member.email }}</p>
                         {% endif %}
-                        
-                        <p class="small text-white">{{ member.panel.name }} ({{ member.panel.year }})</p>
+                        <p class="small text-muted">{{ member.panel.name }} ({{ member.panel.year }})</p>
                     </div>
                     
                     <!-- Right Column - Bio & Contact -->
@@ -350,6 +348,13 @@
                             <i class="bi bi-info-circle me-2"></i>Biography
                         </h6>
                         <p class="mb-4">{{ member.bio|linebreaks }}</p>
+                        
+                        {% if member.fathers_name %}
+                        <h6 class="text-cyan mb-3">
+                            <i class="bi bi-person me-2"></i>Father's Name
+                        </h6>
+                        <p class="mb-4">{{ member.fathers_name }}</p>
+                        {% endif %}
                         
                         <h6 class="text-cyan mb-3">
                             <i class="bi bi-envelope me-2"></i>Contact Information

@@ -151,6 +151,23 @@ main.container-fluid {
 .status-ongoing { background: rgba(255, 255, 0, 0.2); color: yellow; border: 1px solid yellow; }
 .status-completed { background: rgba(255, 107, 0, 0.2); color: var(--primary-orange); border: 1px solid var(--primary-orange); }
 
+/* --- Role Badges --- */
+.badge.bg-cyan {
+    background-color: var(--primary-cyan) !important;
+    color: #000 !important;
+    font-weight: bold;
+    display: inline-block;
+    padding: 0.35rem 0.65rem !important;
+}
+
+.badge.bg-orange {
+    background-color: var(--primary-orange) !important;
+    color: #000 !important;
+    font-weight: bold;
+    display: inline-block;
+    padding: 0.35rem 0.65rem !important;
+}
+
 /* --- Timer Section --- */
 .timer-section {
     background: linear-gradient(135deg, rgba(0, 31, 63, 0.8), rgba(0, 0, 0, 0.9));
@@ -267,6 +284,23 @@ body::before {
 }
 
 .btn-close-white { filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg); }
+
+/* --- Advisor Photo Styling --- */
+.advisor-photo {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    border: 3px solid var(--primary-cyan);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
+.advisor-photo.placeholder {
+    background: rgba(0, 243, 255, 0.1);
+}
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
