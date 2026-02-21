@@ -23,7 +23,7 @@
         <ul class="nav panel-tabs" id="panelTabs" role="tablist">
             {% for panel in panels %}
             <li class="nav-item" role="presentation">
-                <button class="panel-tab {% if forloop.first %}active{% endif %}" 
+                <button class="btn btn-outline-cyber panel-tab {% if forloop.first %}active{% endif %}" 
                         id="tab-{{ panel.id }}" 
                         data-bs-toggle="tab" 
                         data-bs-target="#panel-{{ panel.id }}" 
@@ -45,11 +45,7 @@
                         <h3 class="text-cyan mb-2">{{ panel.name }} ({{ panel.year }})</h3>
                         <p class="lead">{{ panel.description }}</p>
                     </div>
-                    <div class="col-lg-4 text-lg-end">
-                        <a href="{% url 'panel_detail' panel.id %}" class="btn btn-outline-cyber">
-                            View Full Roster <i class="bi bi-arrow-right ms-2"></i>
-                        </a>
-                    </div>
+                   
                 </div>
 
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-1">
@@ -155,7 +151,7 @@
                 </div>
                 
                 <div class="text-center mt-5">
-                    <a href="{% url 'panel_detail' panel.id %}" class="btn btn-cyber btn-lg">
+                    <a href="{% url 'panel_detail' panel.id %}" class="btn btn-outline-cyber">
                         <i class="bi bi-people-fill me-2"></i>Full Panel ({{ panel.members.count }})
                     </a>
                 </div>

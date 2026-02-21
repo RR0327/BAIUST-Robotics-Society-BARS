@@ -53,6 +53,7 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ["status", "date", "created_at"]
     search_fields = ["title", "description", "location"]
     ordering = ["-date"]
+    readonly_fields = ["created_at"]
     fieldsets = (
         ("Event Information", {
             "fields": ("title", "description", "image")
