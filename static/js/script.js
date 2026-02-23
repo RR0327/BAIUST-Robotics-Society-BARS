@@ -21,10 +21,34 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.paddingRight = '0px';
     });
 
-    // 3. Precision Countdown Timer with PadStart
-    function updateCountdown() {
-        const countdownElements = document.querySelectorAll('.countdown');
-        countdownElements.forEach(element => {
+    // 3. Integrated BARS Precision Timer System
+    function updateBARSCountdowns() {
+        // A. Handle Card Mini-Timers (.countdown-mini)
+        document.querySelectorAll('.countdown-mini').forEach(el => {
+            const endDateStr = el.getAttribute('data-end');
+            if (!endDateStr) return;
+
+            const endDate = new Date(endDateStr).getTime();
+            const now = new Date().getTime();
+            const dist = endDate - now;
+            
+            if (isNaN(endDate)) {
+                el.innerHTML = "DATA TBA";
+                return;
+            }
+            
+            if (dist > 0) {
+                const h = Math.floor((dist % 86400000) / 3600000);
+                const m = Math.floor((dist % 3600000) / 60000);
+                const s = Math.floor((dist % 60000) / 1000);
+                el.innerHTML = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            } else {
+                el.innerHTML = "00:00:00";
+            }
+        });
+
+        // B. Handle Major Operation Timers (.countdown)
+        document.querySelectorAll('.countdown').forEach(element => {
             const endDateStr = element.getAttribute('data-end');
             if (!endDateStr) return;
 
@@ -32,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const now = new Date().getTime();
             const distance = endDate - now;
             
-            // Fix for invalid dates in database
             if (isNaN(endDate)) {
                 element.innerHTML = "<small class='text-muted text-uppercase'>Date TBA</small>";
                 return;
@@ -44,37 +67,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 
-                // Using PadStart for a cleaner "Digital" look
                 element.innerHTML = `
-                    <div class="d-inline-block mx-2"><div class="fs-2 fw-bold">${days.toString().padStart(2, '0')}</div><small class="text-cyan">DAYS</small></div>
-                    <div class="d-inline-block mx-2"><div class="fs-2 fw-bold">${hours.toString().padStart(2, '0')}</div><small class="text-cyan">HRS</small></div>
-                    <div class="d-inline-block mx-2"><div class="fs-2 fw-bold">${minutes.toString().padStart(2, '0')}</div><small class="text-cyan">MIN</small></div>
-                    <div class="d-inline-block mx-2"><div class="fs-2 fw-bold">${seconds.toString().padStart(2, '0')}</div><small class="text-cyan">SEC</small></div>
+                    <div class="d-inline-block mx-2">
+                        <div class="fs-2 fw-bold text-white">${days.toString().padStart(2, '0')}</div>
+                        <small class="text-cyan text-uppercase" style="font-size: 0.6rem;">Days</small>
+                    </div>
+                    <div class="d-inline-block mx-2">
+                        <div class="fs-2 fw-bold text-white">${hours.toString().padStart(2, '0')}</div>
+                        <small class="text-cyan text-uppercase" style="font-size: 0.6rem;">Hrs</small>
+                    </div>
+                    <div class="d-inline-block mx-2">
+                        <div class="fs-2 fw-bold text-white">${minutes.toString().padStart(2, '0')}</div>
+                        <small class="text-cyan text-uppercase" style="font-size: 0.6rem;">Min</small>
+                    </div>
+                    <div class="d-inline-block mx-2">
+                        <div class="fs-2 fw-bold text-white">${seconds.toString().padStart(2, '0')}</div>
+                        <small class="text-cyan text-uppercase" style="font-size: 0.6rem;">Sec</small>
+                    </div>
                 `;
             } else {
-                element.innerHTML = "<div class='alert alert-cyber mt-3'><i class='bi bi-megaphone-fill me-2'></i>EVENT IN PROGRESS</div>";
+                element.innerHTML = "<div class='alert alert-cyber mt-3 mb-0 py-2'><i class='bi bi-broadcast-pin me-2'></i>MISSION IN PROGRESS</div>";
             }
         });
     }
-    
-    if (document.querySelector('.countdown')) {
-        setInterval(updateCountdown, 1000);
-        updateCountdown(); // Initial call
+
+    // Initialize Timers
+    if (document.querySelector('.countdown') || document.querySelector('.countdown-mini')) {
+        setInterval(updateBARSCountdowns, 1000);
+        updateBARSCountdowns();
     }
 
-    // 4. Card Hover Effects
-    const cards = document.querySelectorAll('.cyber-card, .cyber-card-orange, .member-card, .event-card');
+    // 4. Enhanced Card Hover & Role Glow Effects
+    const cards = document.querySelectorAll('.cyber-card, .cyber-card-orange, .member-card, .event-card, .role-btn');
     cards.forEach(card => {
         card.addEventListener('mouseenter', () => {
             if (!card.classList.contains('selected')) {
-                card.style.transform = 'translateY(-10px)';
+                // Intense glow effect for Advisor Roles & Responsibilities
+                card.style.transform = 'translateY(-10px) scale(1.02)';
                 card.style.transition = 'all 0.3s ease';
+                
+                // Dynamic border glow logic
+                if (card.style.borderColor.includes('orange') || card.classList.contains('cyber-card-orange')) {
+                    card.style.boxShadow = '0 0 30px rgba(255, 107, 0, 0.4)';
+                } else {
+                    card.style.boxShadow = '0 0 30px rgba(0, 243, 255, 0.4)';
+                }
             }
         });
         
         card.addEventListener('mouseleave', () => {
             if (!card.classList.contains('selected')) {
-                card.style.transform = 'translateY(0)';
+                card.style.transform = 'translateY(0) scale(1)';
+                card.style.boxShadow = 'none';
             }
         });
     });
@@ -100,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     isValid = false;
                     input.classList.add('is-invalid');
                     
-                    // Create error feedback if not exists
                     let feedback = input.nextElementSibling;
                     if (!feedback || !feedback.classList.contains('invalid-feedback')) {
                         feedback = document.createElement('div');
@@ -109,12 +152,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         input.parentNode.appendChild(feedback);
                     }
                     
-                    // Red Cyber Glitch Shadow Effect
                     input.style.boxShadow = '0 0 10px #ff0000';
                     setTimeout(() => { input.style.boxShadow = ''; }, 1000);
                 } else {
                     input.classList.remove('is-invalid');
-                    // Remove feedback if field is now filled
                     let feedback = input.nextElementSibling;
                     if (feedback && feedback.classList.contains('invalid-feedback')) {
                         feedback.remove();

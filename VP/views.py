@@ -27,11 +27,20 @@ def is_admin(user):
 
 
 def index(request):
-    """Landing page with panel info and upcoming events."""
+    """
+    Landing page with panel info and a full list of live/upcoming operations.
+    Updated to support horizontal scrolling for all active events.
+    """
+    # 1. Fetch all panels ordered by year for the recruitment/history section
     panels = Panel.objects.all().order_by("-year")
+
+    # 2. Fetch all events that are not yet finished (Upcoming or Ongoing)
+    # The slice [:3] is removed to allow all active cards to show in the scrollable row
     upcoming_events = Event.objects.filter(status__in=["Upcoming", "Ongoing"]).order_by(
         "date"
-    )[:3]
+    )
+
+    # 3. Keep the latest completed events in context for potential "Past Missions" logs
     completed_events = Event.objects.filter(status="Completed").order_by("-date")[:3]
 
     context = {
@@ -85,8 +94,22 @@ def events_view(request):
 
 
 def event_detail(request, event_id):
+    """Detailed view for a specific event with similar events logic."""
     event = get_object_or_404(Event, id=event_id)
-    return render(request, "VP/event_detail.html", {"event": event})
+
+    # Logic to fetch up to 3 similar events based on status
+    # excluding the current event itself
+    similar_events = (
+        Event.objects.filter(status=event.status)
+        .exclude(id=event.id)
+        .order_by("-date")[:3]
+    )
+
+    context = {
+        "event": event,
+        "similar_events": similar_events,
+    }
+    return render(request, "VP/event_detail.html", context)
 
 
 def event_photos(request, event_id):
@@ -104,12 +127,12 @@ def event_results(request, event_id):
     """Winner standings for a specific mission/event."""
     event = get_object_or_404(Event, id=event_id)
     results = event.results.all()
-    
+
     # Separate champion and runner-up from other results
     champion = results.filter(rank="Champion").first()
     runner_up_1 = results.filter(rank="1st Runner-up").first()
     other_results = results.exclude(rank__in=["Champion", "1st Runner-up"])
-    
+
     return render(
         request,
         "VP/event_results.html",

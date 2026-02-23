@@ -99,41 +99,46 @@
     {% endif %}
 
     <!-- Advisor Roles Section -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <h3 class="section-title">ADVISOR ROLES & RESPONSIBILITIES</h3>
+    <section class="py-5 mt-5">
+    <h2 class="section-title mb-5">ADVISOR ROLES & RESPONSIBILITIES</h2>
+    
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+            <button class="cyber-card p-5 text-center h-100 w-100 bg-transparent role-btn" 
+                    data-bs-toggle="modal" data-bs-target="#projectGuidanceModal"
+                    style="border: 2px solid var(--primary-cyan);">
+                <i class="bi bi-briefcase text-cyan mb-4" style="font-size: 3.5rem;"></i>
+                <h3 class="text-white mb-3">Project Guidance</h3>
+                <p class="text-muted small help-text fs-6">Mentoring students on robotics and automation projects</p>
+                <div class="mt-3 text-cyan small"><i class="bi bi-plus-circle me-1"></i>LEARN MORE</div>
+            </button>
         </div>
-        
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card p-4 h-100">
-                <div class="text-center mb-3">
-                    <i class="bi bi-briefcase fs-1 text-cyan"></i>
-                </div>
-                <h5 class="text-center">Project Guidance</h5>
-                <p class="text-center small">Mentoring students on robotics and automation projects</p>
-            </div>
+
+        <div class="col-md-4">
+            <button class="cyber-card p-5 text-center h-100 w-100 bg-transparent role-btn" 
+                    data-bs-toggle="modal" data-bs-target="#techSupportModal"
+                    style="border: 2px solid var(--primary-orange); box-shadow: 0 0 15px rgba(255, 107, 0, 0.2);">
+                <i class="bi bi-lightbulb text-orange mb-4" style="font-size: 3.5rem;"></i>
+                <h3 class="text-white mb-3">Technical Support</h3>
+                <p class="text-muted small help-text fs-6">Providing technical expertise and resource access</p>
+                <div class="mt-3 text-orange small"><i class="bi bi-plus-circle me-1"></i>LEARN MORE</div>
+            </button>
         </div>
-        
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card-orange p-4 h-100">
-                <div class="text-center mb-3">
-                    <i class="bi bi-lightbulb fs-1 text-orange"></i>
-                </div>
-                <h5 class="text-center">Technical Support</h5>
-                <p class="text-center small">Providing technical expertise and resource access</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card p-4 h-100">
-                <div class="text-center mb-3">
-                    <i class="bi bi-mortarboard fs-1 text-cyan"></i>
-                </div>
-                <h5 class="text-center">Career Mentorship</h5>
-                <p class="text-center small">Guiding students for academic and professional growth</p>
-            </div>
+
+        <div class="col-md-4">
+            <button class="cyber-card p-5 text-center h-100 w-100 bg-transparent role-btn" 
+                    data-bs-toggle="modal" data-bs-target="#careerModal"
+                    style="border: 2px solid var(--primary-cyan);">
+                <i class="bi bi-mortarboard text-cyan mb-4" style="font-size: 3.5rem;"></i>
+                <h3 class="text-white mb-3">Career Mentorship</h3>
+                <p class="text-muted small help-text fs-6">Guiding students for academic and professional growth</p>
+                <div class="mt-3 text-cyan small"><i class="bi bi-plus-circle me-1"></i>LEARN MORE</div>
+            </button>
         </div>
     </div>
+</section>
+
+{% include 'VP/partials/advisor_role_modals.html' %}
 
     <!-- Become an Advisor CTA -->
     {% if user.is_authenticated and user.userprofile.user_type == 'admin' %}

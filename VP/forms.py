@@ -63,7 +63,8 @@ class RegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ["username", "email", "password1", "password2", "user_type"]
+        # UserCreationForm internally expects password1 and password2
+        fields = ["username", "email", "user_type", "student_id", "phone"]
         widgets = {
             "username": forms.TextInput(
                 attrs={
@@ -72,36 +73,38 @@ class RegistrationForm(UserCreationForm):
                     "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
                 }
             ),
-            "password1": forms.PasswordInput(
-                attrs={
-                    "class": "form-control bg-dark text-light border-cyan",
-                    "placeholder": "Create a strong password",
-                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                }
-            ),
-            "password2": forms.PasswordInput(
-                attrs={
-                    "class": "form-control bg-dark text-light border-cyan",
-                    "placeholder": "Confirm your password",
-                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                }
-            ),
-        }
-        labels = {
-            "username": "Username",
-            "password1": "Password",
-            "password2": "Confirm Password",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Customize field labels and help text
+
+        # FIXED: Accessing password1 instead of password to avoid KeyError
+        self.fields["password1"].widget = forms.PasswordInput(
+            attrs={
+                "class": "form-control bg-dark text-light border-cyan",
+                "placeholder": "Enter 8+ characters",
+                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+            }
+        )
+
+        # FIXED: Accessing password2 instead of password_confirm
+        self.fields["password2"].widget = forms.PasswordInput(
+            attrs={
+                "class": "form-control bg-dark text-light border-cyan",
+                "placeholder": "Verify password",
+                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+            }
+        )
+
+        # Unified Help Text and Labels
         self.fields["username"].help_text = (
             "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
         )
+        self.fields["password1"].label = "Password"
         self.fields["password1"].help_text = (
             "Your password must contain at least 8 characters."
         )
+        self.fields["password2"].label = "Password Confirmation"
         self.fields["password2"].help_text = (
             "Enter the same password as before, for verification."
         )
@@ -224,17 +227,6 @@ class MemberForm(forms.ModelForm):
                 }
             ),
         }
-        labels = {
-            "panel": "Executive Panel",
-            "name": "Full Name",
-            "role": "Position",
-            "photo": "Profile Picture",
-            "bio": "Biography",
-            "email": "Email Address",
-            "linkedin": "LinkedIn Profile",
-            "github": "GitHub Profile",
-            "order": "Display Order",
-        }
 
 
 class EventForm(forms.ModelForm):
@@ -298,15 +290,6 @@ class EventForm(forms.ModelForm):
                     "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
                 }
             ),
-        }
-        labels = {
-            "title": "Event Title",
-            "description": "Event Description",
-            "date": "Date & Time",
-            "location": "Event Location",
-            "status": "Event Status",
-            "image": "Event Image",
-            "registration_link": "Registration Link",
         }
 
 
@@ -374,15 +357,6 @@ class AdvisorForm(forms.ModelForm):
                 }
             ),
         }
-        labels = {
-            "name": "Full Name",
-            "designation": "Designation",
-            "department": "Department",
-            "photo": "Profile Picture",
-            "bio": "Biography",
-            "email": "Email Address",
-            "credentials": "Credentials & Achievements",
-        }
 
 
 class PanelForm(forms.ModelForm):
@@ -393,7 +367,7 @@ class PanelForm(forms.ModelForm):
             "name": forms.TextInput(
                 attrs={
                     "class": "form-control bg-dark text-light border-cyan",
-                    "placeholder": "Panel Name (e.g., 8th Panel)",
+                    "placeholder": "Panel Name",
                     "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
                 }
             ),
@@ -407,60 +381,17 @@ class PanelForm(forms.ModelForm):
             "description": forms.Textarea(
                 attrs={
                     "class": "form-control bg-dark text-light border-cyan",
-                    "placeholder": "Panel description and achievements...",
+                    "placeholder": "Panel achievements...",
                     "rows": 4,
                     "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
                 }
             ),
         }
-        labels = {
-            "name": "Panel Name",
-            "year": "Academic Year",
-            "description": "Panel Description",
-        }
-
-
-class UserProfileForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = ["user_type", "panel", "student_id", "phone"]
-        widgets = {
-            "user_type": forms.Select(
-                attrs={
-                    "class": "form-select bg-dark text-light border-cyan",
-                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                }
-            ),
-            "panel": forms.Select(
-                attrs={
-                    "class": "form-select bg-dark text-light border-cyan",
-                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                }
-            ),
-            "student_id": forms.TextInput(
-                attrs={
-                    "class": "form-control bg-dark text-light border-cyan",
-                    "placeholder": "Student ID",
-                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                }
-            ),
-            "phone": forms.TextInput(
-                attrs={
-                    "class": "form-control bg-dark text-light border-cyan",
-                    "placeholder": "Phone Number",
-                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                }
-            ),
-        }
-        labels = {
-            "user_type": "User Role",
-            "panel": "Associated Panel",
-            "student_id": "Student ID",
-            "phone": "Phone Number",
-        }
 
 
 class UserUpdateForm(forms.ModelForm):
+    """Form to update basic User information."""
+
     class Meta:
         model = User
         fields = ["username", "email", "first_name", "last_name"]
@@ -490,59 +421,31 @@ class UserUpdateForm(forms.ModelForm):
                 }
             ),
         }
-        labels = {
-            "username": "Username",
-            "email": "Email Address",
-            "first_name": "First Name",
-            "last_name": "Last Name",
+
+
+class UserProfileForm(forms.ModelForm):
+    """Form to update specific BARS Profile information."""
+
+    class Meta:
+        model = UserProfile
+        fields = ["user_type", "panel", "student_id", "phone"]
+        widgets = {
+            "user_type": forms.Select(
+                attrs={"class": "form-select bg-dark text-light border-cyan"}
+            ),
+            "panel": forms.Select(
+                attrs={"class": "form-select bg-dark text-light border-cyan"}
+            ),
+            "student_id": forms.TextInput(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "placeholder": "Student ID",
+                }
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "placeholder": "Phone Number",
+                }
+            ),
         }
-
-
-# Password Change Form
-class PasswordChangeForm(forms.Form):
-    old_password = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "Current Password",
-                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-            }
-        ),
-        label="Current Password",
-    )
-
-    new_password1 = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "New Password",
-                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-            }
-        ),
-        label="New Password",
-    )
-
-    new_password2 = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "Confirm New Password",
-                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-            }
-        ),
-        label="Confirm New Password",
-    )
-
-
-# Password Reset Form
-class PasswordResetRequestForm(forms.Form):
-    email = forms.EmailField(
-        widget=forms.EmailInput(
-            attrs={
-                "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "Enter your registered email",
-                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-            }
-        ),
-        label="Email Address",
-    )
