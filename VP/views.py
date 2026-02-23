@@ -92,13 +92,34 @@ def event_detail(request, event_id):
 def event_photos(request, event_id):
     """Gallery view for a specific mission/event."""
     event = get_object_or_404(Event, id=event_id)
-    return render(request, "VP/event_photos.html", {"event": event})
+    photos = event.photos.all()
+    return render(
+        request,
+        "VP/event_photos.html",
+        {"event": event, "photos": photos},
+    )
 
 
 def event_results(request, event_id):
     """Winner standings for a specific mission/event."""
     event = get_object_or_404(Event, id=event_id)
-    return render(request, "VP/event_results.html", {"event": event})
+    results = event.results.all()
+    
+    # Separate champion and runner-up from other results
+    champion = results.filter(rank="Champion").first()
+    runner_up_1 = results.filter(rank="1st Runner-up").first()
+    other_results = results.exclude(rank__in=["Champion", "1st Runner-up"])
+    
+    return render(
+        request,
+        "VP/event_results.html",
+        {
+            "event": event,
+            "champion": champion,
+            "runner_up_1": runner_up_1,
+            "other_results": other_results,
+        },
+    )
 
 
 def advisors_view(request):

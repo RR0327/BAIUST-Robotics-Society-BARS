@@ -99,6 +99,51 @@ class Event(models.Model):
         return self.title
 
 
+class EventPhoto(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="photos")
+    image = models.ImageField(upload_to="events/photos/", blank=True, null=True)
+    caption = models.CharField(max_length=200, blank=True)
+    order = models.IntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "uploaded_at"]
+
+    def __str__(self):
+        if self.caption:
+            return self.event.title + " - " + self.caption
+        return f"{self.event.title} - Photo #{self.id}"
+
+
+class EventResult(models.Model):
+    RANK_CHOICES = [
+        ("Champion", "Champion"),
+        ("1st Runner-up", "1st Runner-up"),
+        ("2nd Runner-up", "2nd Runner-up"),
+        ("3rd Place", "3rd Place"),
+        ("4th Place", "4th Place"),
+        ("5th Place", "5th Place"),
+        ("6th Place", "6th Place"),
+        ("7th Place", "7th Place"),
+        ("8th Place", "8th Place"),
+        ("9th Place", "9th Place"),
+        ("10th Place", "10th Place"),
+    ]
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="results")
+    rank = models.CharField(max_length=50, choices=RANK_CHOICES)
+    participant_name = models.CharField(max_length=200)
+    team_name = models.CharField(max_length=200, blank=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order"]
+        unique_together = [["event", "rank"]]
+
+    def __str__(self):
+        return f"{self.event.title} - {self.rank}: {self.participant_name}"
+
+
 class UserProfile(models.Model):
     USER_TYPES = [
         ("admin", "Admin/Advisor"),

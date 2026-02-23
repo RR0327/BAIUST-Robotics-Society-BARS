@@ -16,17 +16,51 @@
     </div>
 
     <div class="row row-cols-1 row-cols-md-3 g-4">
-        <div class="col">
-            <div class="cyber-card p-2 h-100">
-                <img src="{{ event.image.url }}" 
-                     class="img-fluid rounded hover-glow" 
-                     alt="{{ event.title }}"
-                     style="height: 250px; width: 100%; object-fit: cover; border: 1px solid var(--primary-cyan);">
-                <div class="mt-2 text-center">
-                    <small class="text-muted small">MISSION CAPTURE #01</small>
+        {% if photos %}
+            {% for photo in photos %}
+            <div class="col">
+                <div class="cyber-card p-2 h-100">
+                    {% if photo.image %}
+                    <img src="{{ photo.image.url }}" 
+                         class="img-fluid rounded hover-glow" 
+                         alt="{{ event.title }}"
+                         style="height: 250px; width: 100%; object-fit: cover; border: 1px solid var(--primary-cyan);">
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center text-center" style="height: 250px; border: 1px dashed var(--primary-cyan);">
+                        <span class="text-white small">PHOTO PENDING</span>
+                    </div>
+                    {% endif %}
+                    <div class="mt-2 text-center">
+                        {% if photo.caption %}
+                        <small class="text-white small">{{ photo.caption }}</small>
+                        {% else %}
+                        <small class="text-white small">MISSION CAPTURE #{{ forloop.counter|stringformat:"02d" }}</small>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
+            {% endfor %}
+        {% elif event.image %}
+            <div class="col">
+                <div class="cyber-card p-2 h-100">
+                    <img src="{{ event.image.url }}" 
+                         class="img-fluid rounded hover-glow" 
+                         alt="{{ event.title }}"
+                         style="height: 250px; width: 100%; object-fit: cover; border: 1px solid var(--primary-cyan);">
+                    <div class="mt-2 text-center">
+                        <small class="text-white small">MISSION CAPTURE #01</small>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col">
+                <div class="cyber-card p-4 h-100 text-center">
+                    <i class="bi bi-image text-cyan fs-1 mb-3"></i>
+                    <h5 class="mb-2">Photo Pending</h5>
+                    <p class="text-white small mb-0">Event photos will appear here once uploaded.</p>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 

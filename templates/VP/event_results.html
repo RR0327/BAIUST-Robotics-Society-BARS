@@ -14,7 +14,14 @@
             <div class="cyber-card text-center p-4 border-warning h-100">
                 <i class="bi bi-trophy-fill text-warning display-3 mb-3"></i>
                 <h3 class="text-orange">CHAMPION</h3>
-                <h4 class="text-white my-3">{{ event.champion_name|default:"DATA PENDING" }}</h4>
+                {% if champion %}
+                    <h4 class="text-white my-3">{{ champion.participant_name }}</h4>
+                    {% if champion.team_name %}
+                        <p class="text-cyan small">{{ champion.team_name }}</p>
+                    {% endif %}
+                {% else %}
+                    <h4 class="text-white my-3">DATA PENDING</h4>
+                {% endif %}
             </div>
         </div>
 
@@ -22,19 +29,29 @@
             <div class="cyber-card text-center p-4 border-info h-100">
                 <i class="bi bi-award-fill text-info display-3 mb-3"></i>
                 <h3 class="text-cyan">1ST RUNNER-UP</h3>
-                <h4 class="text-white my-3">{{ event.runner_up_1_name|default:"DATA PENDING" }}</h4>
+                {% if runner_up_1 %}
+                    <h4 class="text-white my-3">{{ runner_up_1.participant_name }}</h4>
+                    {% if runner_up_1.team_name %}
+                        <p class="text-cyan small">{{ runner_up_1.team_name }}</p>
+                    {% endif %}
+                {% else %}
+                    <h4 class="text-white my-3">DATA PENDING</h4>
+                {% endif %}
             </div>
         </div>
 
-        {% if event.runner_up_2_name %}
+        {% for result in other_results %}
         <div class="col-md-4">
             <div class="cyber-card text-center p-4 border-orange h-100">
                 <i class="bi bi-award text-orange display-3 mb-3"></i>
-                <h3 class="text-orange">2ND RUNNER-UP</h3>
-                <h4 class="text-white my-3">{{ event.runner_up_2_name }}</h4>
+                <h3 class="text-orange">{{ result.rank|upper }}</h3>
+                <h4 class="text-white my-3">{{ result.participant_name }}</h4>
+                {% if result.team_name %}
+                    <p class="text-cyan small">{{ result.team_name }}</p>
+                {% endif %}
             </div>
         </div>
-        {% endif %}
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

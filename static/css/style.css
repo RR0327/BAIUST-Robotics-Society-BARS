@@ -101,7 +101,7 @@ main.container-fluid {
 }
 
 /* --- Card Styling --- */
-.cyber-card, .member-card, .event-card {
+.cyber-card, .member-card, .event-card, .cyber-card-orange {
     background: var(--dark-card);
     border: 1px solid var(--primary-cyan);
     border-radius: 10px;

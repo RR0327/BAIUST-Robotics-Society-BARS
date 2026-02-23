@@ -64,9 +64,11 @@
                             <a href="{% url 'event_photos' event.id %}" class="btn btn-outline-cyber btn-sm flex-fill">
                                 <i class="bi bi-images me-1"></i>Photos
                             </a>
+                            {% if event.results.exists %}
                             <a href="{% url 'event_results' event.id %}" class="btn btn-outline-cyber btn-sm flex-fill">
                                 <i class="bi bi-trophy me-1"></i>Results
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

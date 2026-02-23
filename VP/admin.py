@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Panel, Member, Advisor, Event, UserProfile
+from .models import Panel, Member, Advisor, Event, EventPhoto, EventResult, UserProfile
 
 
 class PanelAdmin(admin.ModelAdmin):
@@ -48,12 +48,25 @@ class AdvisorAdmin(admin.ModelAdmin):
     )
 
 
+class EventPhotoInline(admin.TabularInline):
+    model = EventPhoto
+    extra = 1
+    fields = ["order", "image", "caption"]
+
+
+class EventResultInline(admin.TabularInline):
+    model = EventResult
+    extra = 1
+    fields = ["order", "rank", "participant_name", "team_name"]
+
+
 class EventAdmin(admin.ModelAdmin):
     list_display = ["title", "date", "status", "location"]
     list_filter = ["status", "date", "created_at"]
     search_fields = ["title", "description", "location"]
     ordering = ["-date"]
     readonly_fields = ["created_at"]
+    inlines = [EventPhotoInline, EventResultInline]
     fieldsets = (
         ("Event Information", {
             "fields": ("title", "description", "image")
@@ -90,9 +103,27 @@ class UserProfileAdmin(admin.ModelAdmin):
     )
 
 
+class EventPhotoAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "event", "order", "caption", "uploaded_at"]
+    list_filter = ["event", "uploaded_at"]
+    search_fields = ["caption", "event__title"]
+    ordering = ["event", "order", "uploaded_at"]
+    list_editable = ["order"]
+
+
+class EventResultAdmin(admin.ModelAdmin):
+    list_display = ["event", "rank", "participant_name", "team_name", "order"]
+    list_filter = ["event", "rank"]
+    search_fields = ["participant_name", "team_name", "event__title"]
+    ordering = ["event", "order"]
+    list_editable = ["order"]
+
+
 # Register models
 admin.site.register(Panel, PanelAdmin)
 admin.site.register(Member, MemberAdmin)
 admin.site.register(Advisor, AdvisorAdmin)
 admin.site.register(Event, EventAdmin)
+admin.site.register(EventPhoto, EventPhotoAdmin)
+admin.site.register(EventResult, EventResultAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
