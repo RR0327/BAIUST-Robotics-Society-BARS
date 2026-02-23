@@ -2,183 +2,107 @@
 
 {% block content %}
 <div class="container py-5">
-    <!-- Back Button -->
     <div class="mb-4">
         <a href="{% url 'events' %}" class="btn btn-outline-cyber">
             <i class="bi bi-arrow-left me-2"></i>Back to Events
         </a>
     </div>
 
-    <!-- Event Header -->
     <div class="row mb-5">
         <div class="col-lg-8">
             <div class="d-flex align-items-center mb-3">
                 <span class="status-badge status-{{ event.status|lower }} me-3">
                     {{ event.status }}
                 </span>
-                <span class="text-muted">
-                    <i class="bi bi-calendar me-1"></i>
-                    Posted {{ event.created_at|timesince }} ago
-                </span>
             </div>
-            
             <h1 class="glow-text mb-3">{{ event.title }}</h1>
             
-            <div class="event-meta mb-4">
-                <div class="d-flex flex-wrap gap-3">
-                    <span class="text-cyan">
-                        <i class="bi bi-calendar me-1"></i>
-                        {{ event.date|date:"F d, Y" }}
-                    </span>
-                    <span class="text-cyan">
-                        <i class="bi bi-clock me-1"></i>
-                        {{ event.date|date:"h:i A" }}
-                    </span>
-                    <span class="text-cyan">
-                        <i class="bi bi-geo-alt me-1"></i>
-                        {{ event.location }}
-                    </span>
-                    {% if event.registration_link %}
-                    <span class="text-orange">
-                        <i class="bi bi-link-45deg me-1"></i>
-                        Registration Open
-                    </span>
-                    {% endif %}
-                </div>
+            <div class="d-flex flex-wrap gap-4 text-cyan mb-4">
+                <span><i class="bi bi-calendar me-2"></i>{{ event.date|date:"F d, Y" }}</span>
+                <span><i class="bi bi-clock me-2"></i>{{ event.date|date:"h:i A" }}</span>
+                <span><i class="bi bi-geo-alt me-2"></i>{{ event.location }}</span>
             </div>
         </div>
         
-        <div class="col-lg-4 text-lg-end">
-            {% if event.registration_link and event.status == 'Upcoming' %}
-            <a href="{{ event.registration_link }}" 
-               target="_blank" 
-               class="btn btn-cyber btn-lg w-100 mb-3">
-                <i class="bi bi-pencil-square me-2"></i>Register Now
-            </a>
-            {% endif %}
-            
-            <div class="btn-group w-100">
-                <button class="btn btn-outline-cyber">
-                    <i class="bi bi-share"></i>
-                </button>
-                <button class="btn btn-outline-cyber">
-                    <i class="bi bi-calendar-plus"></i>
-                </button>
-                <button class="btn btn-outline-cyber">
-                    <i class="bi bi-printer"></i>
-                </button>
+        <div class="col-lg-4">
+            <div class="d-flex gap-2 mb-4">
+                <button class="btn btn-outline-cyber flex-fill" onclick="copyEventLink()"><i class="bi bi-share me-2"></i>Share</button>
+                <a href="https://www.google.com/calendar/render?action=TEMPLATE&text={{ event.title }}&dates={{ event.date|date:'Ymd\THis' }}&location={{ event.location }}" 
+                   target="_blank" class="btn btn-outline-cyber flex-fill"><i class="bi bi-calendar-plus"></i></a>
+                <button class="btn btn-outline-cyber flex-fill" onclick="window.print()"><i class="bi bi-printer"></i></button>
             </div>
         </div>
     </div>
 
-    <!-- Event Content -->
     <div class="row">
-        <!-- Main Content -->
         <div class="col-lg-8">
             {% if event.image %}
-            <div class="cyber-card mb-4">
+            <div class="cyber-card mb-4 p-2">
                 <img src="{{ event.image.url }}" 
-                     class="img-fluid rounded" 
+                     class="img-fluid rounded w-100 shadow-glow" 
                      alt="{{ event.title }}"
-                     style="max-height: 500px; object-fit: cover;">
+                     style="max-height: 500px; object-fit: cover; border: 2px solid var(--primary-cyan);">
             </div>
             {% endif %}
-            
+
             <div class="cyber-card p-4 mb-4">
-                <h4 class="text-cyan mb-3">
-                    <i class="bi bi-info-circle me-2"></i>Event Description
-                </h4>
-                <div class="event-description">
+                <h4 class="text-cyan mb-3"><i class="bi bi-info-circle me-2"></i>Event Description</h4>
+                <div class="text-light fs-5" style="line-height: 1.8;">
                     {{ event.description|linebreaks }}
                 </div>
             </div>
-            
+
             {% if event.status == 'Completed' %}
-            <div class="cyber-card-orange p-4">
-                <h4 class="text-orange mb-3">
-                    <i class="bi bi-trophy me-2"></i>Event Results
-                </h4>
-                <p>This event has been completed. Results and photos will be available soon.</p>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <a href="#" class="btn btn-outline-cyber w-100">
-                            <i class="bi bi-images me-2"></i>View Photos
-                        </a>
+            <div class="cyber-card-orange p-4 mb-4" style="border: 2px solid var(--primary-orange); background: rgba(255, 107, 0, 0.05);">
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <h4 class="text-orange mb-2"><i class="bi bi-trophy me-2"></i>Event Conclusion</h4>
+                        <p class="text-light mb-0 small help-text">Explore the official media and podium standings below.</p>
                     </div>
-                    <div class="col-md-6">
-                        <a href="#" class="btn btn-outline-cyber w-100">
-                            <i class="bi bi-trophy me-2"></i>View Results
-                        </a>
+                    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'event_photos' event.id %}" class="btn btn-outline-cyber btn-sm flex-fill">
+                                <i class="bi bi-images me-1"></i>Photos
+                            </a>
+                            <a href="{% url 'event_results' event.id %}" class="btn btn-outline-cyber btn-sm flex-fill">
+                                <i class="bi bi-trophy me-1"></i>Results
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
             {% endif %}
         </div>
-        
-        <!-- Sidebar -->
+
         <div class="col-lg-4">
-            <!-- Quick Info -->
-            <div class="cyber-card p-4 mb-4">
-                <h5 class="text-cyan mb-3">
-                    <i class="bi bi-card-checklist me-2"></i>Event Details
-                </h5>
-                
-                <ul class="list-unstyled">
+            <div class="cyber-card p-4 mb-4 border-cyan">
+                <h5 class="text-cyan mb-3">Quick Details</h5>
+                <ul class="list-unstyled mb-0">
                     <li class="mb-3">
-                        <strong class="text-cyan d-block">Date & Time</strong>
-                        {{ event.date|date:"F d, Y - h:i A" }}
+                        <small class="help-text d-block">ORGANIZER</small>
+                        <span class="text-white">BAIUST Robotics Society</span>
                     </li>
                     <li class="mb-3">
-                        <strong class="text-cyan d-block">Location</strong>
-                        {{ event.location }}
-                    </li>
-                    <li class="mb-3">
-                        <strong class="text-cyan d-block">Status</strong>
-                        <span class="badge status-badge status-{{ event.status|lower }}">
-                            {{ event.status }}
-                        </span>
+                        <small class="help-text d-block">LOCATION</small>
+                        <span class="text-white">{{ event.location }}</span>
                     </li>
                     {% if event.registration_link %}
-                    <li class="mb-3">
-                        <strong class="text-cyan d-block">Registration</strong>
-                        <a href="{{ event.registration_link }}" class="text-orange">
-                            Click here to register
+                    <li>
+                        <a href="{{ event.registration_link }}" class="text-orange text-decoration-none">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Registration Link
                         </a>
                     </li>
                     {% endif %}
                 </ul>
             </div>
-            
-            <!-- Organizer Info -->
-            <div class="cyber-card-orange p-4 mb-4">
-                <h5 class="text-orange mb-3">
-                    <i class="bi bi-people me-2"></i>Organized By
-                </h5>
-                <p>BAIUST Robotics & Automation Society</p>
-                <a href="mailto:bars@baiust.edu.bd" class="btn btn-sm btn-outline-cyber">
-                    <i class="bi bi-envelope me-1"></i>Contact Organizers
-                </a>
-            </div>
-            
-            <!-- Similar Events -->
-            <div class="cyber-card p-4">
-                <h5 class="text-cyan mb-3">
-                    <i class="bi bi-calendar2-event me-2"></i>Similar Events
-                </h5>
-                <div class="list-group list-group-flush">
-                    {% for similar_event in similar_events|slice:":3" %}
-                    <a href="{% url 'event_detail' similar_event.id %}" 
-                       class="list-group-item list-group-item-action bg-transparent border-cyan">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ similar_event.title|truncatewords:5 }}</h6>
-                            <small class="text-muted">{{ similar_event.date|date:"M d" }}</small>
-                        </div>
-                        <small class="text-muted">{{ similar_event.location }}</small>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
         </div>
     </div>
 </div>
+
+<script>
+function copyEventLink() {
+    navigator.clipboard.writeText(window.location.href);
+    alert("TRANSMISSION COPIED: Event URL is ready for sharing.");
+}
+</script>
 {% endblock %}

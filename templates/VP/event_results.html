@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-cyber">
+            <i class="bi bi-arrow-left me-2"></i>Back to Operation Details
+        </a>
+    </div>
+
+    <h1 class="glow-text text-center mb-5">WINNERS PODIUM: {{ event.title|upper }}</h1>
+
+    <div class="row justify-content-center g-4">
+        <div class="col-md-4">
+            <div class="cyber-card text-center p-4 border-warning h-100">
+                <i class="bi bi-trophy-fill text-warning display-3 mb-3"></i>
+                <h3 class="text-orange">CHAMPION</h3>
+                <h4 class="text-white my-3">{{ event.champion_name|default:"DATA PENDING" }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="cyber-card text-center p-4 border-info h-100">
+                <i class="bi bi-award-fill text-info display-3 mb-3"></i>
+                <h3 class="text-cyan">1ST RUNNER-UP</h3>
+                <h4 class="text-white my-3">{{ event.runner_up_1_name|default:"DATA PENDING" }}</h4>
+            </div>
+        </div>
+
+        {% if event.runner_up_2_name %}
+        <div class="col-md-4">
+            <div class="cyber-card text-center p-4 border-orange h-100">
+                <i class="bi bi-award text-orange display-3 mb-3"></i>
+                <h3 class="text-orange">2ND RUNNER-UP</h3>
+                <h4 class="text-white my-3">{{ event.runner_up_2_name }}</h4>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

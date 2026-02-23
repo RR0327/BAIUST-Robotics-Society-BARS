@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-cyber">
+            <i class="bi bi-arrow-left me-2"></i>Back to Mission Details
+        </a>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="glow-text mb-2">VIEW PHOTOS OF {{ event.title|upper }}</h1>
+            <p class="text-cyan small help-text uppercase">Mission Visual Log Access Authorized</p>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col">
+            <div class="cyber-card p-2 h-100">
+                <img src="{{ event.image.url }}" 
+                     class="img-fluid rounded hover-glow" 
+                     alt="{{ event.title }}"
+                     style="height: 250px; width: 100%; object-fit: cover; border: 1px solid var(--primary-cyan);">
+                <div class="mt-2 text-center">
+                    <small class="text-muted small">MISSION CAPTURE #01</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-glow:hover {
+        box-shadow: 0 0 20px var(--primary-cyan);
+        transform: scale(1.02);
+        transition: 0.3s ease;
+    }
+</style>
+{% endblock %}

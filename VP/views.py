@@ -58,36 +58,47 @@ def panel_detail(request, panel_id):
 
 
 def events_view(request):
-    """Searchable and filterable list of all events."""
+    """Refined search and filtering logic."""
     status_filter = request.GET.get("status", "all")
     search_query = request.GET.get("search", "")
-    events = Event.objects.all()
+
+    # Base queryset
+    events = Event.objects.all().order_by("-date")
+
+    # Refined Search: Title, Location, and Description
+    if search_query:
+        events = events.filter(
+            Q(title__icontains=search_query)
+            | Q(location__icontains=search_query)
+            | Q(description__icontains=search_query)
+        )
 
     if status_filter != "all":
         events = events.filter(status=status_filter)
 
-    if search_query:
-        events = events.filter(
-            Q(title__icontains=search_query)
-            | Q(description__icontains=search_query)
-            | Q(location__icontains=search_query)
-        )
-
     context = {
         "events": events,
-        "status_filter": status_filter,
         "search_query": search_query,
-        "upcoming_count": Event.objects.filter(status="Upcoming").count(),
-        "ongoing_count": Event.objects.filter(status="Ongoing").count(),
-        "completed_count": Event.objects.filter(status="Completed").count(),
+        "status_filter": status_filter,
     }
     return render(request, "VP/events.html", context)
 
 
 def event_detail(request, event_id):
-    """Detailed view for specific event operations."""
     event = get_object_or_404(Event, id=event_id)
     return render(request, "VP/event_detail.html", {"event": event})
+
+
+def event_photos(request, event_id):
+    """Gallery view for a specific mission/event."""
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, "VP/event_photos.html", {"event": event})
+
+
+def event_results(request, event_id):
+    """Winner standings for a specific mission/event."""
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, "VP/event_results.html", {"event": event})
 
 
 def advisors_view(request):

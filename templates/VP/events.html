@@ -188,37 +188,43 @@
 
     <!-- Event Categories -->
     <div class="row mt-5">
-        <div class="col-12">
-            <h3 class="section-title">EVENT CATEGORIES</h3>
-        </div>
-        
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card-orange text-center p-4 h-100">
-                <i class="bi bi-laptop fs-1 text-orange mb-3"></i>
-                <h5>Workshops</h5>
-                <p class="small">Hands-on training sessions on latest technologies</p>
-                <span class="badge bg-orange">Active</span>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card text-center p-4 h-100">
-                <i class="bi bi-trophy fs-1 text-cyan mb-3"></i>
-                <h5>Competitions</h5>
-                <p class="small">Robotics and coding challenges with prizes</p>
-                <span class="badge bg-cyan">Upcoming</span>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-3">
-            <div class="cyber-card-orange text-center p-4 h-100">
-                <i class="bi bi-megaphone fs-1 text-orange mb-3"></i>
-                <h5>Seminars</h5>
-                <p class="small">Tech talks from industry experts</p>
-                <span class="badge bg-orange">Regular</span>
-            </div>
-        </div>
+    <div class="col-12">
+        <h3 class="section-title">EVENT CATEGORIES</h3>
     </div>
+    
+    <div class="col-md-4 mb-3">
+        <a href="{% url 'events' %}?search=Workshop" class="text-decoration-none">
+            <div class="cyber-card-orange text-center p-4 h-100 category-card active-border">
+                <i class="bi bi-laptop fs-1 text-orange mb-3"></i>
+                <h5 class="text-white">Workshops</h5>
+                <p class="small text-muted help-text">Hands-on training sessions on latest technologies</p>
+                <span class="status-badge status-completed py-1 px-3">Active</span>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <a href="{% url 'events' %}?search=Competition" class="text-decoration-none">
+            <div class="cyber-card text-center p-4 h-100 category-card cyan-border">
+                <i class="bi bi-trophy fs-1 text-cyan mb-3"></i>
+                <h5 class="text-white">Competitions</h5>
+                <p class="small text-muted help-text">Robotics and coding challenges with prizes</p>
+                <span class="status-badge status-upcoming py-1 px-3">Upcoming</span>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <a href="{% url 'events' %}?search=Seminar" class="text-decoration-none">
+            <div class="cyber-card-orange text-center p-4 h-100 category-card">
+                <i class="bi bi-megaphone fs-1 text-orange mb-3"></i>
+                <h5 class="text-white">Seminars</h5>
+                <p class="small text-muted help-text">Tech talks from industry experts</p>
+                <span class="status-badge status-completed py-1 px-3">Regular</span>
+            </div>
+        </a>
+    </div>
+</div>
 
     <!-- Call to Action -->
     <div class="cyber-card text-center p-5 mt-5">

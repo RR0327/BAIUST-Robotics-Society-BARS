@@ -307,3 +307,35 @@ body::before {
     .hero-title { font-size: 2.5rem; }
     .timer-display { font-size: 2rem; }
 }
+
+/* Specific Category Hover Effects */
+.cyber-card.active-category:hover {
+    box-shadow: 0 0 30px var(--primary-orange);
+    border-color: var(--primary-orange) !important;
+}
+
+/* Ensure the links don't change text color */
+a.text-decoration-none:hover h3 {
+    color: var(--primary-cyan) !important;
+    text-shadow: var(--neon-glow);
+}
+
+/* Styling to match the glowing borders in the image */
+.category-card {
+    transition: all 0.3s ease;
+    border-width: 2px !important;
+}
+.active-border {
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 0 15px rgba(255, 107, 0, 0.4);
+}
+.cyan-border {
+    border-color: var(--primary-cyan) !important;
+}
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--neon-glow);
+}
+.help-text {
+    min-height: 40px;
+}
