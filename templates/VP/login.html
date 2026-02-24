@@ -41,7 +41,7 @@
                         <label for="id_username" class="form-label">
                             <i class="bi bi-person-fill text-cyan me-2"></i>Username
                         </label>
-                        <div class="input-group">
+                        <div class="input-group w-100">
                             <span class="input-group-text bg-dark border-cyan">
                                 <i class="bi bi-person text-cyan"></i>
                             </span>
@@ -53,7 +53,7 @@
                         <label for="id_password" class="form-label">
                             <i class="bi bi-key-fill text-cyan me-2"></i>Password
                         </label>
-                        <div class="input-group">
+                        <div class="input-group w-100">
                             <span class="input-group-text bg-dark border-cyan">
                                 <i class="bi bi-lock text-cyan"></i>
                             </span>
@@ -123,26 +123,6 @@
         let passField = document.getElementById('id_password')
             || document.querySelector('input[name="password"]')
             || document.querySelector('input[type="password"]');
-
-        // Attach toggle handler if both exist
-        if (toggleBtn && passField) {
-            toggleBtn.addEventListener('click', function (e) {
-                e.preventDefault(); // safe-guard — button type="button" already, but prevents accidental effects
-                // Use the .type property (more reliable than setAttribute/getAttribute)
-                const isPass = passField.type === 'password';
-                passField.type = isPass ? 'text' : 'password';
-
-                // Swap icon classes cleanly
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-eye');
-                    icon.classList.toggle('bi-eye-slash');
-                }
-
-                // Toggle button visual state (preserve your styling toggle)
-                this.classList.toggle('btn-cyber');
-            });
-        }
 
         // Demo Auto-fill Logic (guarded — safe if element list is empty)
         const demoCodes = document.querySelectorAll('.demo-credential');
@@ -238,6 +218,32 @@
     .demo-credential:hover {
         background: rgba(0, 243, 255, 0.15);
         box-shadow: 0 0 5px var(--primary-cyan);
+    }
+
+    /* Ensure input groups match register field sizing */
+    .cyber-form .input-group {
+        width: 100%;
+        flex-wrap: nowrap;
+    }
+
+    .cyber-form .input-group .form-control {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: 1%;
+    }
+
+    /* Override global password width inside input-group so buttons stay aligned */
+    .cyber-form .input-group input[type="password"] {
+        width: auto !important;
+    }
+
+    .cyber-form .input-group-text,
+    .cyber-form .input-group .btn {
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 45px;
     }
 </style>
 {% endblock %}

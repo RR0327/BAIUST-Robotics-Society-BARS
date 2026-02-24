@@ -3,14 +3,13 @@ from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.contrib.auth import login, authenticate, logout as auth_logout
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.db.models.functions import TruncMonth
 
 from .models import Panel, Member, Advisor, Event, UserProfile
-from .forms import RegistrationForm, UserUpdateForm, UserProfileForm
+from .forms import RegistrationForm, UserUpdateForm, UserProfileForm, LoginForm
 
 # --- Helper Functions ---
 
@@ -202,7 +201,7 @@ def register_view(request):
 def login_view(request):
     """Handles terminal access for authorized users."""
     if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
@@ -211,7 +210,7 @@ def login_view(request):
                 return redirect("admin_dashboard")
             return redirect("index")
     else:
-        form = AuthenticationForm()
+        form = LoginForm()
     return render(request, "VP/login.html", {"form": form})
 
 

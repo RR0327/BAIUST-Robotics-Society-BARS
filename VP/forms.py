@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from .models import UserProfile, Panel, Member, Event, Advisor
 
@@ -117,37 +117,24 @@ class RegistrationForm(UserCreationForm):
         return user
 
 
-class LoginForm(forms.Form):
-    username = forms.CharField(
-        max_length=150,
-        widget=forms.TextInput(
-            attrs={
+class LoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["username"].widget.attrs.update(
+            {
                 "class": "form-control bg-dark text-light border-cyan",
                 "placeholder": "Enter your username or email",
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
-        ),
-        label="Username or Email",
-    )
-
-    password = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
+        )
+        self.fields["password"].widget.attrs.update(
+            {
                 "class": "form-control bg-dark text-light border-cyan",
                 "placeholder": "Enter your password",
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
-        ),
-        label="Password",
-    )
-
-    remember_me = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "id": "rememberMe"}
-        ),
-        label="Remember me",
-    )
+        )
 
 
 class MemberForm(forms.ModelForm):

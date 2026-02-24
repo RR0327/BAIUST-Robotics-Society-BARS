@@ -246,6 +246,24 @@ input[type="password"] {
     color: #fff !important;
 }
 
+/* Keep input-group password fields aligned with trailing buttons */
+.cyber-form .input-group {
+    flex-wrap: nowrap;
+}
+
+.cyber-form .input-group > .form-control[type="password"] {
+    width: 1% !important;
+}
+
+.cyber-form .input-group-text,
+.cyber-form .input-group .btn {
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 45px;
+}
+
 /* Responsive adjustment for mobile devices */
 @media (max-width: 768px) {
     .row.g-3 {

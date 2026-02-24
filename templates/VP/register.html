@@ -27,7 +27,7 @@
                     <div class="row g-3">
                         {% for field in form %}
                             {% if field.name != 'password1' and field.name != 'password2' %}
-                            <div class="{% if field.name == 'user_type' or field.name == 'email' %}col-12{% else %}col-md-6{% endif %}" 
+                               <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' %}col-12{% else %}col-md-6{% endif %}" 
                                  {% if field.name == 'student_id' %}id="student-id-field"{% endif %}>
                                 
                                 <label for="{{ field.id_for_label }}" class="form-label text-cyan small fw-bold">
