@@ -8,44 +8,113 @@
     </div>
 
     <div class="row g-4 justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="cyber-card p-4 h-100 text-center border-cyan shadow-glow d-flex flex-column">
-                <div class="mb-3">
-                    <i class="bi bi-trophy text-orange display-4"></i>
-                </div>
-                <h3 class="text-white mb-2">NATIONAL HACKATHON 2026</h3>
-                <p class="text-muted small help-text flex-grow-1">Led team to victory with an AI-driven urban farming solution.</p>
-                <div class="mt-3">
-                    <span class="badge bg-dark border border-cyan text-cyan px-3 py-2">1ST PLACE</span>
-                </div>
-            </div>
-        </div>
+        {% if achievements %}
+            {% for achievement in achievements %}
+            <div class="col-md-6 col-lg-4">
+                <div class="cyber-card p-4 h-100 text-center border-cyan shadow-glow d-flex flex-column">
+                    {% if achievement.image %}
+                    <div class="mb-3">
+                        <img src="{{ achievement.image.url }}" alt="{{ achievement.title }}" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        {% if achievement.category == "club" %}
+                        <i class="bi bi-trophy text-orange display-4"></i>
+                        {% elif achievement.category == "contest" %}
+                        <i class="bi bi-award text-cyan display-4"></i>
+                        {% elif achievement.category == "research" %}
+                        <i class="bi bi-journal-text text-orange display-4"></i>
+                        {% elif achievement.category == "innovation" %}
+                        <i class="bi bi-cpu text-cyan display-4"></i>
+                        {% else %}
+                        <i class="bi bi-star text-orange display-4"></i>
+                        {% endif %}
+                    </div>
+                    {% endif %}
 
-        <div class="col-md-6 col-lg-4">
-            <div class="cyber-card p-4 h-100 text-center border-orange shadow-glow d-flex flex-column">
-                <div class="mb-3">
-                    <i class="bi bi-robot text-cyan display-4"></i>
-                </div>
-                <h3 class="text-white mb-2">ROBOTICS CHAMPIONS</h3>
-                <p class="text-muted small help-text flex-grow-1">Secured 1st place in the 'Neural Drift' global robotics tournament.</p>
-                <div class="mt-3">
-                    <span class="badge bg-dark border border-orange text-orange px-3 py-2">CHAMPIONS</span>
-                </div>
-            </div>
-        </div>
+                    <h3 class="text-white mb-2">{{ achievement.title|upper }}</h3>
+                    {% if achievement.contest_name %}
+                    <p class="text-cyan small mb-2 fw-bold">{{ achievement.contest_name }}</p>
+                    {% endif %}
+                    
+                    <p class="text-muted small help-text flex-grow-1">{{ achievement.description }}</p>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="cyber-card p-4 h-100 text-center border-cyan shadow-glow d-flex flex-column">
-                <div class="mb-3">
-                    <i class="bi bi-cpu text-orange display-4"></i>
-                </div>
-                <h3 class="text-white mb-2">IOT INNOVATION AWARD</h3>
-                <p class="text-muted small help-text flex-grow-1">Recognized for developing the most energy-efficient smart campus node.</p>
-                <div class="mt-3">
-                    <span class="badge bg-dark border border-cyan text-cyan px-3 py-2">HONORABLE MENTION</span>
+                    {% if achievement.team_name %}
+                    <p class="text-white small mb-1"><strong class="text-cyan">Team:</strong> {{ achievement.team_name }}</p>
+                    {% endif %}
+
+                    {% if achievement.participants %}
+                    <div class="text-white small mb-2 text-start ps-3">
+                        <strong class="text-cyan">Participants:</strong><br>
+                        {{ achievement.participants|linebreaksbr }}
+                    </div>
+                    {% endif %}
+
+                    {% if achievement.location %}
+                    <p class="text-white small mb-2"><i class="bi bi-geo-alt me-1 text-cyan"></i>{{ achievement.location }}</p>
+                    {% endif %}
+
+                    <div class="mt-auto">
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <span class="badge bg-dark border border-cyan text-cyan px-3 py-2">
+                                {{ achievement.get_category_display }}
+                            </span>
+                            {% if achievement.position %}
+                            <span class="badge bg-dark border border-orange text-orange px-3 py-2">
+                                {{ achievement.position }}
+                            </span>
+                            {% endif %}
+                            {% if achievement.date %}
+                            <span class="badge bg-dark border border-orange text-orange px-3 py-2">
+                                {{ achievement.date|date:"M d, Y" }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+            {% endfor %}
+        {% else %}
+            <!-- Default examples when database is empty -->
+            <div class="col-md-6 col-lg-4">
+                <div class="cyber-card p-4 h-100 text-center border-cyan shadow-glow d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="bi bi-trophy text-orange display-4"></i>
+                    </div>
+                    <h3 class="text-white mb-2">NATIONAL HACKATHON 2026</h3>
+                    <p class="text-muted small help-text flex-grow-1">Led team to victory with an AI-driven urban farming solution.</p>
+                    <div class="mt-3">
+                        <span class="badge bg-dark border border-cyan text-cyan px-3 py-2">1ST PLACE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="cyber-card p-4 h-100 text-center border-orange shadow-glow d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="bi bi-robot text-cyan display-4"></i>
+                    </div>
+                    <h3 class="text-white mb-2">ROBOTICS CHAMPIONS</h3>
+                    <p class="text-muted small help-text flex-grow-1">Secured 1st place in the 'Neural Drift' global robotics tournament.</p>
+                    <div class="mt-3">
+                        <span class="badge bg-dark border border-orange text-orange px-3 py-2">CHAMPIONS</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="cyber-card p-4 h-100 text-center border-cyan shadow-glow d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="bi bi-cpu text-orange display-4"></i>
+                    </div>
+                    <h3 class="text-white mb-2">IOT INNOVATION AWARD</h3>
+                    <p class="text-muted small help-text flex-grow-1">Recognized for developing the most energy-efficient smart campus node.</p>
+                    <div class="mt-3">
+                        <span class="badge bg-dark border border-cyan text-cyan px-3 py-2">HONORABLE MENTION</span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <div class="row mt-5 pt-5">

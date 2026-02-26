@@ -144,6 +144,37 @@ class EventResult(models.Model):
         return f"{self.event.title} - {self.rank}: {self.participant_name}"
 
 
+class Achievement(models.Model):
+    CATEGORY_CHOICES = [
+        ("club", "Club Performance"),
+        ("contest", "Outside Contest"),
+        ("research", "Research/Publication"),
+        ("innovation", "Innovation"),
+        ("other", "Other"),
+    ]
+
+    title = models.CharField(max_length=200)
+    contest_name = models.CharField(max_length=200, blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    position = models.CharField(max_length=100, blank=True)
+    team_name = models.CharField(max_length=200, blank=True)
+    participants = models.TextField(
+        blank=True, help_text="Enter one participant per line"
+    )
+    description = models.TextField()
+    date = models.DateField(null=True, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    image = models.ImageField(upload_to="achievements/", blank=True, null=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "-date", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
 class UserProfile(models.Model):
     USER_TYPES = [
         ("admin", "Admin/Advisor"),

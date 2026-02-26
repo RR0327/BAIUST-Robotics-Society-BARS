@@ -11,7 +11,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_protect
 
-from .models import Panel, Member, Advisor, Event, UserProfile
+from .models import Panel, Member, Advisor, Event, Achievement, UserProfile
 from .forms import RegistrationForm, UserUpdateForm, UserProfileForm, LoginForm
 
 # --- Helper Functions ---
@@ -316,7 +316,8 @@ def about_view(request):
 
 
 def achievements_view(request):
-    return render(request, "VP/achievements.html")
+    achievements = Achievement.objects.all()
+    return render(request, "VP/achievements.html", {"achievements": achievements})
 
 
 @csrf_protect  # Ensures security is active

@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import Panel, Member, Advisor, Event, EventPhoto, EventResult, UserProfile
+from .models import (
+    Panel,
+    Member,
+    Advisor,
+    Event,
+    EventPhoto,
+    EventResult,
+    Achievement,
+    UserProfile,
+)
 
 
 class PanelAdmin(admin.ModelAdmin):
@@ -119,6 +128,41 @@ class EventResultAdmin(admin.ModelAdmin):
     list_editable = ["order"]
 
 
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = [
+        "title",
+        "category",
+        "position",
+        "contest_name",
+        "date",
+        "order",
+    ]
+    list_filter = ["category", "date", "created_at"]
+    search_fields = ["title", "contest_name", "team_name", "participants"]
+    ordering = ["order", "-date", "-created_at"]
+    list_editable = ["order"]
+    fieldsets = (
+        (
+            "Achievement Details",
+            {
+                "fields": (
+                    "title",
+                    "category",
+                    "contest_name",
+                    "position",
+                    "team_name",
+                )
+            },
+        ),
+        ("Participants", {"fields": ("participants",)}),
+        ("Description", {"fields": ("description",)}),
+        ("Media & Context", {"fields": ("image", "date", "location")}),
+        ("Ordering", {"fields": ("order",)}),
+        ("Metadata", {"fields": ("created_at",), "classes": ("collapse",)}),
+    )
+    readonly_fields = ["created_at"]
+
+
 # Register models
 admin.site.register(Panel, PanelAdmin)
 admin.site.register(Member, MemberAdmin)
@@ -126,4 +170,5 @@ admin.site.register(Advisor, AdvisorAdmin)
 admin.site.register(Event, EventAdmin)
 admin.site.register(EventPhoto, EventPhotoAdmin)
 admin.site.register(EventResult, EventResultAdmin)
+admin.site.register(Achievement, AchievementAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
