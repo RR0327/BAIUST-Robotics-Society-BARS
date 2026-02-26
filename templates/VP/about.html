@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center mb-5 pb-5">
+        <div class="col-lg-6">
+            <h6 class="text-orange tracking-widest uppercase mb-3">System Intelligence Report</h6>
+            <h1 class="glow-text display-4 mb-4">WHAT IS BARS?</h1>
+            <p class="lead text-cyan">The BAIUST Robotics & Automation Society is the primary innovation hub at the Bangladesh Army International University of Science and Technology.</p>
+            <p class="text-light opacity-75">We are a community of engineers, technical writers, and visionaries dedicated to bridging the gap between theoretical software architecture and real-world hardware integration.</p>
+        </div>
+        
+        <div class="col-lg-6 mt-4 mt-lg-0">
+            <div class="cyber-card p-2 border-cyan shadow-glow">
+                <div class="bg-dark overflow-hidden" style="height: 350px; position: relative; border-radius: 4px;">
+                    <div class="d-flex justify-content-start align-items-center px-3 py-1 bg-dark border-bottom border-cyan" style="font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;">
+                        <span class="text-cyan"><i class="bi bi-shield-check me-2"></i>BARS_SOCIETY_SYSTEM_CORE</span>
+                    </div>
+                    
+                    <img src="{% static 'images/Bars-logo.png' %}" 
+                         alt="BAIUST Robotics Society Logo" 
+                         style="width: 100%; height: 100%; object-fit: contain; background: #000; opacity: 0.9;">
+
+                    <div class="position-absolute bottom-0 end-0 p-2">
+                        <a href="https://www.facebook.com/profile.php?id=100091567601326" target="_blank" class="qr-uplink" data-bs-toggle="tooltip">
+                            <img src="{% static 'images/fb-qr-code.png' %}" 
+                                 alt="Scan for Facebook Page" 
+                                 style="width: 60px; height: 60px; opacity: 0.6; filter: drop-shadow(0 0 5px var(--primary-cyan));" 
+                                 class="qr-glow">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mb-5">
+        <h2 class="glow-text">OUR MISSION PARAMETERS</h2>
+        <div class="header-line mx-auto"></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="cyber-card p-4 h-100 text-center border-secondary">
+                <i class="bi bi-robot text-orange display-5 mb-3"></i>
+                <h4 class="text-white">ROBOTICS & IOT</h4>
+                <p class="small help-text">Leading development in Arduino programming and hardware integration for autonomous solutions and social impact.</p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="cyber-card p-4 h-100 text-center border-secondary">
+                <i class="bi bi-code-slash text-cyan display-5 mb-3"></i>
+                <h4 class="text-white">SYSTEM ARCHITECTURE</h4>
+                <p class="small help-text">Specializing in Python, Django, and FastAPI to build robust, scalable backends for community-driven platforms.</p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="cyber-card p-4 h-100 text-center border-secondary">
+                <i class="bi bi-mortarboard text-orange display-5 mb-3"></i>
+                <h4 class="text-white">MENTORSHIP</h4>
+                <p class="small help-text">Actively guiding over 50+ students in embedded systems and academic growth, fostering the next generation of engineers.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5 pt-4 justify-content-center">
+        <div class="col-md-8">
+            <div class="cyber-card p-4 border-cyan shadow-glow text-center" style="background: rgba(0, 243, 255, 0.05);">
+                <h5 class="text-cyan mb-3"><i class="bi bi-shield-lock-fill me-2"></i>AI ETHICS & SECURITY</h5>
+                <p class="text-light opacity-75">We prioritize ethical standards in AI, focusing on security audits and responsible automation in every project.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .header-line {
+        height: 2px;
+        width: 100px;
+        background: var(--primary-cyan);
+        box-shadow: 0 0 10px var(--primary-cyan);
+        margin-top: 10px;
+        margin-bottom: 30px;
+    }
+    .help-text {
+        line-height: 1.6;
+        color: #a0a0a0 !important;
+    }
+    .shadow-glow {
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+    }
+    .cyber-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: rgba(0, 0, 0, 0.6);
+    }
+    .cyber-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 243, 255, 0.1);
+    }
+    .qr-uplink {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .qr-glow:hover {
+        opacity: 1 !important;
+        filter: drop-shadow(0 0 10px var(--primary-cyan)) !important;
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}

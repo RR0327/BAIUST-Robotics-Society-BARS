@@ -1,12 +1,15 @@
 import csv
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import login, authenticate, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.db.models.functions import TruncMonth
+from django.core.mail import send_mail
+from django.conf import settings
+from django.views.decorators.csrf import csrf_protect
 
 from .models import Panel, Member, Advisor, Event, UserProfile
 from .forms import RegistrationForm, UserUpdateForm, UserProfileForm, LoginForm
@@ -306,3 +309,48 @@ def export_members_csv(request):
         writer.writerow([m.name, m.role, m.panel.year, m.email])
 
     return response
+
+
+def about_view(request):
+    return render(request, "VP/about.html")
+
+
+def achievements_view(request):
+    return render(request, "VP/achievements.html")
+
+
+@csrf_protect  # Ensures security is active
+def submit_triumph(request):
+    if request.method == "POST":
+        # Extract data from the POST request
+        name = request.POST.get("name", "").strip()
+        title = request.POST.get("title", "").strip()
+        category = request.POST.get("category", "")
+        description = request.POST.get("description", "").strip()
+
+        # Simple validation check
+        if not name or not title or not description:
+            return JsonResponse(
+                {"status": "error", "message": "All fields required."}, status=400
+            )
+
+        subject = f"BARS MAINFRAME: New Triumph by {name}"
+        message = f"Commander, a victory was reported.\n\nMember: {name}\nTitle: {title}\nCategory: {category}\n\nDescription: {description}"
+
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.EMAIL_HOST_USER],
+                fail_silently=False,
+            )
+            return JsonResponse({"status": "success"})
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": "SMTP Uplink Failed."}, status=500
+            )
+
+    return JsonResponse(
+        {"status": "error", "message": "Invalid request method."}, status=405
+    )

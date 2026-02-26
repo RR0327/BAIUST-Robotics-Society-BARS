@@ -19,6 +19,10 @@ urlpatterns = [
     path("profile/", views.user_profile, name="user_profile"),
     path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
     path("export-members/", views.export_members_csv, name="export_members_csv"),
+    path("about/", views.about_view, name="about"),
+    path("achievements/", views.achievements_view, name="achievements"),
+    # THE UPLINK ROUTE
+    path("submit-triumph/", views.submit_triumph, name="submit_triumph"),
     # Password reset urls (using Django's built-in auth views)
     path(
         "password-reset/",

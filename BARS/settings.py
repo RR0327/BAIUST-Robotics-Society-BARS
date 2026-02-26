@@ -118,8 +118,8 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -131,13 +131,14 @@ LOGOUT_REDIRECT_URL = "index"
 # BARS/settings.py
 
 # Email Configuration for Gmail SMTP
+# --- EMAIL UPLINK PROTOCOL ---
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "franklin.gta.vmi@gmail.com"
-EMAIL_HOST_PASSWORD = "wxnx qiyf xkib cfdy"
-DEFAULT_FROM_EMAIL = "BARS Terminal <franklin.gta.vmi@gmail.com>"
+EMAIL_HOST_USER = "bars8thpanel@gmail.com"
+EMAIL_HOST_PASSWORD = "iwes wtal lynf jrdz"
+DEFAULT_FROM_EMAIL = "BAIUST-Robotics-Society-BARS <bars8thpanel@gmail.com>"
 
 # Optional: If you want to see errors in the console during testing
 # EMAIL_DEBUG = True
