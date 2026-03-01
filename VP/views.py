@@ -71,26 +71,44 @@ def panel_detail(request, panel_id):
 def events_view(request):
     """Refined search and filtering logic."""
     status_filter = request.GET.get("status", "all")
-    search_query = request.GET.get("search", "")
+    search_query = request.GET.get("search", "").strip()
 
-    # Base queryset
-    events = Event.objects.all().order_by("-date")
+    # Base queryset for search and counts
+    base_events = Event.objects.all()
 
     # Refined Search: Title, Location, and Description
     if search_query:
-        events = events.filter(
+        base_events = base_events.filter(
             Q(title__icontains=search_query)
             | Q(location__icontains=search_query)
             | Q(description__icontains=search_query)
         )
 
+    # Counts for filter tabs (respect search query)
+    all_count = base_events.count()
+    upcoming_count = base_events.filter(status="Upcoming").count()
+    ongoing_count = base_events.filter(status="Ongoing").count()
+    completed_count = base_events.filter(status="Completed").count()
+
+    # Apply status filter to final listing
+    events = base_events.order_by("-date")
     if status_filter != "all":
         events = events.filter(status=status_filter)
+
+    # Countdown section data
+    upcoming_events = Event.objects.filter(status__in=["Upcoming", "Ongoing"]).order_by(
+        "date"
+    )
 
     context = {
         "events": events,
         "search_query": search_query,
         "status_filter": status_filter,
+        "all_count": all_count,
+        "upcoming_count": upcoming_count,
+        "ongoing_count": ongoing_count,
+        "completed_count": completed_count,
+        "upcoming_events": upcoming_events,
     }
     return render(request, "VP/events.html", context)
 

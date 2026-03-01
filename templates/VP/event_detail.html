@@ -88,11 +88,17 @@
                 <small class="help-text d-block">LOCATION</small>
                 <span class="text-white">{{ event.location }}</span>
             </li>
-            {% if event.registration_link %}
+            {% if event.registration_link and event.status != 'Completed' %}
             <li>
                 <a href="{{ event.registration_link }}" class="text-orange text-decoration-none">
                     <i class="bi bi-box-arrow-up-right me-2"></i>Registration Link
                 </a>
+            </li>
+            {% elif event.status == 'Completed' %}
+            <li>
+                <span class="text-orange">
+                    <i class="bi bi-lock me-2"></i>Registration Closed
+                </span>
             </li>
             {% endif %}
         </ul>
