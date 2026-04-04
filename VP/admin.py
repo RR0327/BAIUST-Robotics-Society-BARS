@@ -43,13 +43,16 @@ class MemberAdmin(admin.ModelAdmin):
 class AdvisorAdmin(admin.ModelAdmin):
     list_display = ["name", "designation", "department", "email"]
     list_filter = ["department"]
-    search_fields = ["name", "designation", "department", "email"]
+    search_fields = ["name", "designation", "department", "email", "expertise"]
     fieldsets = (
         ("Basic Information", {
             "fields": ("name", "designation", "department", "photo")
         }),
         ("Contact & Bio", {
             "fields": ("email", "bio")
+        }),
+        ("Expertise", {
+            "fields": ("expertise",)
         }),
         ("Credentials", {
             "fields": ("credentials",)

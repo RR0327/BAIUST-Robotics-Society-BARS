@@ -321,6 +321,7 @@ class AdvisorForm(forms.ModelForm):
             "department",
             "photo",
             "bio",
+            "expertise",
             "email",
             "credentials",
         ]
@@ -360,6 +361,14 @@ class AdvisorForm(forms.ModelForm):
                     "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
                 }
             ),
+            "expertise": forms.Textarea(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "placeholder": "One expertise per line (e.g. Robotics, AI, Embedded Systems)...",
+                    "rows": 4,
+                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+                }
+            ),
             "email": forms.EmailInput(
                 attrs={
                     "class": "form-control bg-dark text-light border-cyan",
@@ -376,6 +385,10 @@ class AdvisorForm(forms.ModelForm):
                 }
             ),
         }
+
+    def clean_expertise(self):
+        expertise = self.cleaned_data.get("expertise", "")
+        return Advisor.normalize_bullet_lines(expertise)
 
 
 class PanelForm(forms.ModelForm):

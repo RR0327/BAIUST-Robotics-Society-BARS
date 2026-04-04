@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -87,12 +88,43 @@ class Advisor(models.Model):
     designation = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     photo = models.ImageField(upload_to="advisors/", blank=True, null=True)
-    bio = models.TextField()
+    bio = models.TextField(blank=True, null=True)
+    expertise = models.TextField(
+        blank=True,
+        help_text="Enter one expertise per line (bullet points are optional)",
+    )
     email = models.EmailField()
     credentials = models.TextField(help_text="Enter each credential on a new line")
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def normalize_bullet_lines(raw_text):
+        if not raw_text:
+            return ""
+
+        points = []
+        for line in str(raw_text).replace("\r\n", "\n").split("\n"):
+            cleaned = line.strip()
+            if not cleaned:
+                continue
+
+            # Accept pasted bullets/numbers and keep only normalized text.
+            cleaned = re.sub(r"^[-*\u2022]+\s*", "", cleaned)
+            cleaned = re.sub(r"^\d+[.)\-\s]+", "", cleaned)
+            if cleaned:
+                points.append(cleaned)
+
+        return "\n".join(points)
+
+    @property
+    def expertise_points(self):
+        return [line.strip() for line in self.expertise.split("\n") if line.strip()]
+
+    def save(self, *args, **kwargs):
+        self.expertise = self.normalize_bullet_lines(self.expertise)
+        super().save(*args, **kwargs)
 
 
 class Event(models.Model):

@@ -74,7 +74,20 @@
                 </p>
                 
                 <!-- Bio -->
+                {% if advisor.bio %}
                 <p class="text-muted small help-text flex-grow-1 mb-3">{{ advisor.bio|truncatewords:20 }}</p>
+                {% endif %}
+
+                {% if advisor.expertise_points %}
+                <div class="text-start small mb-3">
+                    <p class="text-cyan mb-2"><i class="bi bi-lightbulb me-1"></i>Expertise</p>
+                    <ul class="text-cyan ps-4 mb-0">
+                        {% for point in advisor.expertise_points|slice:":3" %}
+                        <li>{{ point }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
                 
                 <!-- Buttons -->
                 <div class="mt-auto d-flex gap-2 justify-content-center">
@@ -195,8 +208,10 @@
                     
                     <!-- Right Column -->
                     <div class="col-md-8">
+                        {% if advisor.bio %}
                         <h6 class="text-cyan mb-3">Biography</h6>
                         <p class="mb-4">{{ advisor.bio|linebreaks }}</p>
+                        {% endif %}
                         
                         {% if advisor.credentials %}
                         <h6 class="text-cyan mb-3">Credentials & Achievements</h6>
@@ -205,17 +220,16 @@
                         </div>
                         {% endif %}
                         
+                        {% if advisor.expertise_points %}
                         <div class="mt-4 pt-4 border-top border-cyan">
                             <h6 class="text-cyan mb-3">Areas of Expertise</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                <span class="badge bg-cyan">Robotics</span>
-                                <span class="badge bg-cyan">Automation</span>
-                                <span class="badge bg-cyan">AI/ML</span>
-                                <span class="badge bg-cyan">IoT</span>
-                                <span class="badge bg-cyan">Embedded Systems</span>
-                                <span class="badge bg-cyan">Research</span>
-                            </div>
+                            <ul class="mb-0">
+                                {% for point in advisor.expertise_points %}
+                                <li class="mb-2">{{ point }}</li>
+                                {% endfor %}
+                            </ul>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
