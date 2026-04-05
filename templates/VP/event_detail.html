@@ -1,6 +1,69 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    @page {
+        size: A4;
+        margin: 2cm;
+        margin-bottom: 1.2cm;
+        margin-top: 1cm;
+    }
+
+    /* Print header and footer using elements */
+    .print-header {
+        display: none;
+    }
+
+    @media print {
+        .print-header {
+            display: block;
+            position: relative;
+            font-size: 10px;
+            color: #fff;
+            padding: 0 0 0.2cm 0;
+            background: var(--dark-card);
+            z-index: 1;
+            text-align: center;
+            box-shadow: none;
+            border: none;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .print-footer {
+            display: block;
+            position: relative;
+            font-size: 10px;
+            color: #fff;
+            padding: 0.2cm 0 0 0;
+            background: var(--dark-card);
+            text-align: center;
+            z-index: 1;
+            box-shadow: none;
+            border: none;
+            margin: 0.2cm 0 0 0;
+            line-height: 1.2;
+        }
+
+        /* Keep a tiny gap while preserving full card border visibility */
+        .event-print-wrapper {
+            margin-top: 0.15cm !important;
+            margin-bottom: 0 !important;
+        }
+    }
+
+    .print-footer {
+        display: none;
+    }
+</style>
+
+<!-- Print Header -->
+<div class="print-header">
+    <strong>BAIUST Robotics Society</strong> | 
+    <span>Website: {{ request.scheme }}://{{ request.get_host }}</span> | 
+    <span>Printed: {% now 'M d, Y | g:i A' %}</span>
+</div>
+
 <div class="event-print-wrapper">
 <div class="container py-5 event-detail-page">
     <div class="mb-4">
@@ -144,6 +207,13 @@
     </div>
 </div>
 </div>
+
+    <!-- Print Footer -->
+    <div class="print-footer">
+        <span><strong>BAIUST Robotics Society</strong></span> | 
+        <span>{{ request.scheme }}://{{ request.get_host }}</span> | 
+        <span>Document: Event Details Report</span>
+    </div>
 
 <script>
 function copyEventLink() {
