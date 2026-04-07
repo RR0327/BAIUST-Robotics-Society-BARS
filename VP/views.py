@@ -351,6 +351,10 @@ def achievements_view(request):
     return render(request, "VP/achievements.html", {"achievements": achievements})
 
 
+def developers_view(request):
+    return render(request, "VP/developers.html")
+
+
 @csrf_protect  # Ensures security is active
 def submit_triumph(request):
     if request.method == "POST":
