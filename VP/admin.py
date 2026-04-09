@@ -97,16 +97,41 @@ class EventAdmin(admin.ModelAdmin):
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ["user", "user_type", "panel", "student_id"]
-    list_filter = ["user_type", "panel", "created_at"]
-    search_fields = ["user__username", "user__email", "student_id", "phone"]
+    list_display = [
+        "user",
+        "user_type",
+        "panel",
+        "student_id",
+        "payment_method_label",
+        "payment_reference",
+    ]
+    list_filter = ["user_type", "panel", "payment_method", "created_at"]
+    search_fields = [
+        "user__username",
+        "user__email",
+        "student_id",
+        "phone",
+        "payment_reference",
+    ]
     ordering = ["-created_at"]
+    readonly_fields = ["created_at"]
+
+    @admin.display(description="Payment Method", ordering="payment_method")
+    def payment_method_label(self, obj):
+        return obj.get_payment_method_display()
+
     fieldsets = (
         ("User Account", {
             "fields": ("user", "user_type")
         }),
         ("Profile Information", {
-            "fields": ("panel", "student_id", "phone")
+            "fields": (
+                "panel",
+                "student_id",
+                "phone",
+                "payment_method",
+                "payment_reference",
+            )
         }),
         ("Metadata", {
             "fields": ("created_at",),

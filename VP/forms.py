@@ -10,6 +10,10 @@ class RegistrationForm(UserCreationForm):
         ("student", "Student"),
         ("guest", "Guest"),
     ]
+    PAYMENT_METHODS = [
+        ("cash", "Cash"),
+        ("bkash", "Bkash Payment"),
+    ]
 
     user_type = forms.ChoiceField(
         choices=USER_TYPES,
@@ -62,10 +66,44 @@ class RegistrationForm(UserCreationForm):
         label="Phone Number",
     )
 
+    payment_method = forms.ChoiceField(
+        choices=PAYMENT_METHODS,
+        widget=forms.RadioSelect(
+            attrs={
+                "class": "payment-method-radio",
+            }
+        ),
+        required=True,
+        initial="cash",
+        label="Payment Method",
+    )
+
+    payment_reference = forms.CharField(
+        required=True,
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control bg-dark text-light border-cyan",
+                "placeholder": "Enter person name",
+                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+                "id": "id_payment_reference",
+            }
+        ),
+        label="Person Name",
+    )
+
     class Meta:
         model = User
         # UserCreationForm internally expects password1 and password2
-        fields = ["username", "email", "user_type", "student_id", "phone"]
+        fields = [
+            "username",
+            "email",
+            "user_type",
+            "student_id",
+            "phone",
+            "payment_method",
+            "payment_reference",
+        ]
         widgets = {
             "username": forms.TextInput(
                 attrs={
@@ -140,6 +178,21 @@ class RegistrationForm(UserCreationForm):
             )
 
         return normalized_phone
+
+    def clean_payment_reference(self):
+        payment_reference = self.cleaned_data.get("payment_reference", "").strip()
+        payment_method = self.cleaned_data.get("payment_method")
+
+        if not payment_reference:
+            raise forms.ValidationError("This field is required.")
+
+        if payment_method == "cash" and len(payment_reference) < 2:
+            raise forms.ValidationError("Please enter a valid person name.")
+
+        if payment_method == "bkash" and len(payment_reference) < 6:
+            raise forms.ValidationError("Please enter a valid transaction ID.")
+
+        return payment_reference
 
     def save(self, commit=True):
         user = super().save(commit=False)

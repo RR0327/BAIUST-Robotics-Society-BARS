@@ -227,6 +227,8 @@ def register_view(request):
                 user_type=form.cleaned_data.get("user_type", "student"),
                 student_id=form.cleaned_data.get("student_id", ""),
                 phone=form.cleaned_data.get("phone", ""),
+                payment_method=form.cleaned_data.get("payment_method", "cash"),
+                payment_reference=form.cleaned_data.get("payment_reference", ""),
             )
             login(request, user)
             messages.success(request, "Registration successful! Welcome to BARS.")

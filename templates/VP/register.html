@@ -27,14 +27,26 @@
                     <div class="row g-3">
                         {% for field in form %}
                             {% if field.name != 'password1' and field.name != 'password2' %}
-                               <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' %}col-12{% else %}col-md-6{% endif %}" 
-                                 {% if field.name == 'student_id' %}id="student-id-field"{% endif %}>
+                            <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' or field.name == 'payment_method' %}col-12{% else %}col-md-6{% endif %}" 
+                                 {% if field.name == 'student_id' %}id="student-id-field"{% endif %}
+                                 {% if field.name == 'payment_reference' %}id="payment-reference-field"{% endif %}>
                                 
-                                <label for="{{ field.id_for_label }}" class="form-label text-cyan small fw-bold">
+                                <label for="{{ field.id_for_label }}" class="form-label text-cyan small fw-bold" {% if field.name == 'payment_reference' %}id="payment-reference-label"{% endif %}>
                                     {{ field.label|upper }} {% if field.field.required %}*{% endif %}
                                 </label>
                                 
-                                {{ field }}
+                                {% if field.name == 'payment_method' %}
+                                    <div class="payment-method-grid">
+                                        {% for radio in field %}
+                                            <label class="payment-method-card" for="{{ radio.id_for_label }}">
+                                                {{ radio.tag }}
+                                                <span>{{ radio.choice_label }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ field }}
+                                {% endif %}
                                 
                                 {% if field.help_text %}
                                 <small class="help-text small d-block mt-1" style="color: #adff2f;">{{ field.help_text }}</small>
@@ -127,7 +139,30 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleStudentId(); 
     }
 
-    // 2. Password Strength - Targets id_password1 for single-instance field
+    // 2. Payment Reference Toggle (Cash => Person Name, Bkash => Transaction ID)
+    const paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
+    const paymentReferenceLabel = document.getElementById('payment-reference-label');
+    const paymentReferenceInput = document.getElementById('id_payment_reference');
+
+    function togglePaymentReferenceText() {
+        if (!paymentReferenceLabel || !paymentReferenceInput || !paymentMethodInputs.length) return;
+
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+        if (selectedMethod && selectedMethod.value === 'bkash') {
+            paymentReferenceLabel.innerHTML = 'TRANSACTION ID *';
+            paymentReferenceInput.placeholder = 'Enter bKash transaction ID';
+        } else {
+            paymentReferenceLabel.innerHTML = 'PERSON NAME *';
+            paymentReferenceInput.placeholder = 'Enter person name';
+        }
+    }
+
+    paymentMethodInputs.forEach((input) => {
+        input.addEventListener('change', togglePaymentReferenceText);
+    });
+    togglePaymentReferenceText();
+
+    // 3. Password Strength - Targets id_password1 for single-instance field
     const pass1 = document.getElementById('id_password1');
     if (pass1) {
         const strengthDiv = document.createElement('div');
@@ -158,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 3. Form Submission Pulse Animation
+    // 4. Form Submission Pulse Animation
     const form = document.querySelector('form');
     form.addEventListener('submit', function() {
         const btn = document.getElementById('submit-btn');
@@ -172,6 +207,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
     #student-id-field { transition: all 0.3s ease; }
+    #payment-reference-field { transition: all 0.3s ease; }
+    .payment-method-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    .payment-method-card {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--primary-cyan);
+        border-radius: 8px;
+        background: rgba(0, 243, 255, 0.06);
+        color: var(--text-light);
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+    .payment-method-card:hover {
+        box-shadow: 0 0 12px rgba(0, 243, 255, 0.25);
+    }
+    .payment-method-card input[type="radio"] {
+        accent-color: var(--primary-cyan);
+    }
+    .payment-method-card:has(input[type="radio"]:checked) {
+        border-color: var(--accent-orange);
+        background: rgba(255, 165, 0, 0.1);
+        box-shadow: 0 0 16px rgba(255, 165, 0, 0.2);
+    }
     .help-text { min-height: 1.2rem; }
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -181,5 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
         100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
     }
     .pulse { animation: pulse 1.5s infinite; }
+
+    @media (max-width: 576px) {
+        .payment-method-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 {% endblock %}
