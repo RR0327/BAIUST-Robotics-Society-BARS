@@ -68,9 +68,10 @@ class RegistrationForm(UserCreationForm):
 
     payment_method = forms.ChoiceField(
         choices=PAYMENT_METHODS,
-        widget=forms.RadioSelect(
+        widget=forms.Select(
             attrs={
-                "class": "payment-method-radio",
+                "class": "form-select bg-dark text-light border-cyan",
+                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
         ),
         required=True,
