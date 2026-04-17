@@ -59,7 +59,7 @@ class RegistrationForm(UserCreationForm):
     )
 
     student_id = forms.CharField(
-        required=False,
+        required=True,
         max_length=50,
         widget=forms.TextInput(
             attrs={
@@ -72,7 +72,7 @@ class RegistrationForm(UserCreationForm):
     )
 
     phone = forms.CharField(
-        required=False,
+        required=True,
         max_length=20,
         widget=forms.TextInput(
             attrs={
@@ -98,7 +98,7 @@ class RegistrationForm(UserCreationForm):
 
     position_name = forms.ChoiceField(
         choices=POSITION_CHOICES,
-        required=False,
+        required=True,
         widget=forms.Select(
             attrs={
                 "class": "form-select bg-dark text-light border-cyan",
