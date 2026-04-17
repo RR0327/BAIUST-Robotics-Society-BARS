@@ -222,13 +222,19 @@ def register_view(request):
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            is_bars_member = form.cleaned_data.get("is_bars_member", "yes") == "yes"
+            position_name = form.cleaned_data.get("position_name")
             UserProfile.objects.create(
                 user=user,
-                user_type=form.cleaned_data.get("user_type", "student"),
+                user_type=(
+                    "member"
+                    if is_bars_member
+                    else form.cleaned_data.get("user_type", "student")
+                ),
                 student_id=form.cleaned_data.get("student_id", ""),
                 phone=form.cleaned_data.get("phone", ""),
-                payment_method=form.cleaned_data.get("payment_method", "cash"),
-                payment_reference=form.cleaned_data.get("payment_reference", ""),
+                is_bars_member=is_bars_member,
+                position_name=position_name if is_bars_member else None,
             )
             login(request, user)
             messages.success(request, "Registration successful! Welcome to BARS.")

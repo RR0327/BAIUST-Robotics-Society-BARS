@@ -225,6 +225,22 @@ class Achievement(models.Model):
         return self.title
 
 
+class GeneralMemberApplication(models.Model):
+    title = models.CharField(
+        max_length=120,
+        default="JOIN AS GENERAL MEMBER",
+    )
+    form_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "General Member Application"
+        verbose_name_plural = "General Member Application"
+
+    def __str__(self):
+        return self.title
+
+
 class UserProfile(models.Model):
     USER_TYPES = [
         ("admin", "Admin/Advisor"),
@@ -232,9 +248,22 @@ class UserProfile(models.Model):
         ("student", "Student"),
         ("guest", "Guest"),
     ]
-    PAYMENT_METHODS = [
-        ("cash", "Cash"),
-        ("bkash", "Bkash Payment"),
+    POSITION_CHOICES = [
+        ("President", "President"),
+        ("Vice President", "Vice President"),
+        ("General Secretary", "General Secretary"),
+        ("Joint Secretary", "Joint Secretary"),
+        ("Treasurer", "Treasurer"),
+        ("Assistant Treasurer", "Assistant Treasurer"),
+        ("Organizing Secretary", "Organizing Secretary"),
+        ("Assistant Organizing Secretary", "Assistant Organizing Secretary"),
+        ("Media & Publication Secretary", "Media & Publication Secretary"),
+        (
+            "Assistant Media & Publication Secretary",
+            "Assistant Media & Publication Secretary",
+        ),
+        ("Executive Member", "Executive Member"),
+        ("General Member", "General Member"),
     ]
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="userprofile"
@@ -243,13 +272,13 @@ class UserProfile(models.Model):
     panel = models.ForeignKey(Panel, on_delete=models.SET_NULL, null=True, blank=True)
     student_id = models.CharField(max_length=50, blank=True)
     phone = models.CharField(max_length=20, blank=True)
-    payment_method = models.CharField(
-        max_length=20,
-        choices=PAYMENT_METHODS,
-        default="cash",
+    is_bars_member = models.BooleanField(default=True)
+    position_name = models.CharField(
+        max_length=60,
+        choices=POSITION_CHOICES,
         blank=True,
+        null=True,
     )
-    payment_reference = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

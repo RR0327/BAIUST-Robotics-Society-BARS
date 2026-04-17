@@ -402,6 +402,28 @@ main.container-fluid {
     background: #050505 !important;
 }
 
+.form-control::placeholder {
+    color: #9aa0a6 !important;
+    opacity: 1 !important;
+}
+
+.form-control::-webkit-input-placeholder {
+    color: #9aa0a6 !important;
+}
+
+.form-control::-moz-placeholder {
+    color: #9aa0a6 !important;
+    opacity: 1 !important;
+}
+
+.form-control:-ms-input-placeholder {
+    color: #9aa0a6 !important;
+}
+
+.form-control::-ms-input-placeholder {
+    color: #9aa0a6 !important;
+}
+
 /* FIXED: HELP TEXT VISIBILITY (Hints below inputs) */
 .form-text, 
 .cyber-form small, 

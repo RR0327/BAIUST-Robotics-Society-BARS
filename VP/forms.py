@@ -10,9 +10,27 @@ class RegistrationForm(UserCreationForm):
         ("student", "Student"),
         ("guest", "Guest"),
     ]
-    PAYMENT_METHODS = [
-        ("cash", "Cash"),
-        ("bkash", "Bkash Payment"),
+    BARS_MEMBER_CHOICES = [
+        ("yes", "Yes"),
+        ("no", "No"),
+    ]
+    POSITION_CHOICES = [
+        ("", "Select Position"),
+        ("President", "President"),
+        ("Vice President", "Vice President"),
+        ("General Secretary", "General Secretary"),
+        ("Joint Secretary", "Joint Secretary"),
+        ("Treasurer", "Treasurer"),
+        ("Assistant Treasurer", "Assistant Treasurer"),
+        ("Organizing Secretary", "Organizing Secretary"),
+        ("Assistant Organizing Secretary", "Assistant Organizing Secretary"),
+        ("Media & Publication Secretary", "Media & Publication Secretary"),
+        (
+            "Assistant Media & Publication Secretary",
+            "Assistant Media & Publication Secretary",
+        ),
+        ("Executive Member", "Executive Member"),
+        ("General Member", "General Member"),
     ]
 
     user_type = forms.ChoiceField(
@@ -46,7 +64,7 @@ class RegistrationForm(UserCreationForm):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "BAIUST-XX-XXX",
+                "placeholder": "BAIUST-STUDENT-ID",
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
         ),
@@ -59,38 +77,37 @@ class RegistrationForm(UserCreationForm):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "+8801XXXXXXXXX",
+                "placeholder": "01XXXXXXXXX",
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
         ),
         label="Phone Number",
     )
 
-    payment_method = forms.ChoiceField(
-        choices=PAYMENT_METHODS,
+    is_bars_member = forms.ChoiceField(
+        choices=BARS_MEMBER_CHOICES,
+        widget=forms.RadioSelect(
+            attrs={
+                "class": "form-check-input",
+            }
+        ),
+        required=True,
+        initial="yes",
+        label="Are you a BARS member?",
+    )
+
+    position_name = forms.ChoiceField(
+        choices=POSITION_CHOICES,
+        required=False,
         widget=forms.Select(
             attrs={
                 "class": "form-select bg-dark text-light border-cyan",
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+                "id": "id_position_name",
             }
         ),
-        required=True,
-        initial="cash",
-        label="Payment Method",
-    )
-
-    payment_reference = forms.CharField(
-        required=True,
-        max_length=100,
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "Enter person name",
-                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
-                "id": "id_payment_reference",
-            }
-        ),
-        label="Person Name",
+        initial="",
+        label="Position Name",
     )
 
     class Meta:
@@ -102,8 +119,8 @@ class RegistrationForm(UserCreationForm):
             "user_type",
             "student_id",
             "phone",
-            "payment_method",
-            "payment_reference",
+            "is_bars_member",
+            "position_name",
         ]
         widgets = {
             "username": forms.TextInput(
@@ -122,7 +139,7 @@ class RegistrationForm(UserCreationForm):
         self.fields["password1"].widget = forms.PasswordInput(
             attrs={
                 "class": "form-control bg-dark text-light border-cyan",
-                "placeholder": "Enter 8+ characters",
+                "placeholder": "Enter your password",
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
         )
@@ -180,20 +197,18 @@ class RegistrationForm(UserCreationForm):
 
         return normalized_phone
 
-    def clean_payment_reference(self):
-        payment_reference = self.cleaned_data.get("payment_reference", "").strip()
-        payment_method = self.cleaned_data.get("payment_method")
+    def clean(self):
+        cleaned_data = super().clean()
+        is_bars_member = cleaned_data.get("is_bars_member", "yes")
+        position_name = cleaned_data.get("position_name")
 
-        if not payment_reference:
-            raise forms.ValidationError("This field is required.")
+        if is_bars_member == "yes" and not position_name:
+            self.add_error("position_name", "Please select a position name.")
 
-        if payment_method == "cash" and len(payment_reference) < 2:
-            raise forms.ValidationError("Please enter a valid person name.")
+        if is_bars_member == "no":
+            cleaned_data["position_name"] = None
 
-        if payment_method == "bkash" and len(payment_reference) < 6:
-            raise forms.ValidationError("Please enter a valid transaction ID.")
-
-        return payment_reference
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)

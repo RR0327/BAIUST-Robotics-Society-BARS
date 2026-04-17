@@ -69,6 +69,7 @@
                     <li class="nav-item">
                         <a class="nav-link {% if 'about' in request.path %}active glow{% endif %}" href="{% url 'about' %}">ABOUT</a>
                     </li>
+                    
                     <li class="nav-item">
                         <a class="nav-link {% if 'advisors' in request.path %}active glow{% endif %}" href="{% url 'advisors' %}">ADVISORS</a>
                     </li>
@@ -104,10 +105,17 @@
                                 <i class="bi bi-box-arrow-in-right me-1"></i>LOGIN
                             </a>
                         </li>
+                       
                         <li class="nav-item ms-lg-2">
-                            <a class="btn btn-cyber btn-sm px-3" href="{% url 'register' %}">
-                                <i class="bi bi-person-plus me-1"></i>JOIN US
+                            {% if general_member_application and general_member_application.is_active and general_member_application.form_url %}
+                            <a class="btn btn-cyber btn-sm px-3" href="{{ general_member_application.form_url }}" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-ui-checks-grid me-1"></i>{{ general_member_application.title }}
                             </a>
+                            {% else %}
+                            <span class="btn btn-cyber btn-sm px-3 disabled" aria-disabled="true" title="Registration closed for general member">
+                                <i class="bi bi-lock me-1"></i>Registration Closed for General Member
+                            </span>
+                            {% endif %}
                         </li>
                     {% endif %}
                 </ul>

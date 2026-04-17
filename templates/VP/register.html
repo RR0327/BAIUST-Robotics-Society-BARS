@@ -29,13 +29,25 @@
                             {% if field.name != 'password1' and field.name != 'password2' %}
                                <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' %}col-12{% else %}col-md-6{% endif %}" 
                                  {% if field.name == 'student_id' %}id="student-id-field"{% endif %}
-                                 {% if field.name == 'payment_reference' %}id="payment-reference-field"{% endif %}>
+                                 {% if field.name == 'position_name' %}id="position-name-field"{% endif %}
+                                 {% if field.name == 'is_bars_member' %}id="bars-member-field"{% endif %}>
                                 
-                                <label for="{{ field.id_for_label }}" class="form-label text-cyan small fw-bold" {% if field.name == 'payment_reference' %}id="payment-reference-label"{% endif %}>
+                                <label for="{{ field.id_for_label }}" class="form-label text-cyan small fw-bold">
                                     {{ field.label|upper }} {% if field.field.required %}*{% endif %}
                                 </label>
 
-                                {{ field }}
+                                {% if field.name == 'is_bars_member' %}
+                                    <div class="bars-member-options d-flex flex-wrap gap-3 mt-1">
+                                        {% for choice in field %}
+                                            <label class="bars-member-choice d-flex align-items-center gap-2 mb-0">
+                                                {{ choice.tag }}
+                                                <span>{{ choice.choice_label }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ field }}
+                                {% endif %}
                                 
                                 {% if field.help_text %}
                                 <small class="help-text small d-block mt-1" style="color: #adff2f;">{{ field.help_text }}</small>
@@ -128,27 +140,33 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleStudentId(); 
     }
 
-    // 2. Payment Reference Toggle (Cash => Person Name, Bkash => Transaction ID)
-    const paymentMethodSelect = document.querySelector('select[name="payment_method"]');
-    const paymentReferenceLabel = document.getElementById('payment-reference-label');
-    const paymentReferenceInput = document.getElementById('id_payment_reference');
+    // 2. BARS Member Position Toggle
+    const barsMemberRadios = document.querySelectorAll('input[name="is_bars_member"]');
+    const positionNameWrapper = document.getElementById('position-name-field');
+    const positionNameInput = document.getElementById('id_position_name');
 
-    function togglePaymentReferenceText() {
-        if (!paymentReferenceLabel || !paymentReferenceInput || !paymentMethodSelect) return;
+    function togglePositionName() {
+        const selected = document.querySelector('input[name="is_bars_member"]:checked');
+        const isMember = !selected || selected.value === 'yes';
 
-        if (paymentMethodSelect.value === 'bkash') {
-            paymentReferenceLabel.innerHTML = 'TRANSACTION ID *';
-            paymentReferenceInput.placeholder = 'Enter bKash transaction ID';
+        if (!positionNameWrapper || !positionNameInput) return;
+
+        if (isMember) {
+            positionNameWrapper.style.display = 'block';
+            positionNameInput.required = true;
         } else {
-            paymentReferenceLabel.innerHTML = 'PERSON NAME *';
-            paymentReferenceInput.placeholder = 'Enter person name';
+            positionNameWrapper.style.display = 'none';
+            positionNameInput.required = false;
+            positionNameInput.value = '';
         }
     }
 
-    if (paymentMethodSelect) {
-        paymentMethodSelect.addEventListener('change', togglePaymentReferenceText);
+    if (barsMemberRadios.length) {
+        barsMemberRadios.forEach((radio) => {
+            radio.addEventListener('change', togglePositionName);
+        });
     }
-    togglePaymentReferenceText();
+    togglePositionName();
 
     // 3. Password Strength - Targets id_password1 for single-instance field
     const pass1 = document.getElementById('id_password1');
@@ -195,7 +213,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
     #student-id-field { transition: all 0.3s ease; }
-    #payment-reference-field { transition: all 0.3s ease; }
+    #position-name-field { transition: all 0.3s ease; }
+    #bars-member-field { min-height: 96px; }
+    .bars-member-options { row-gap: 0.75rem; }
+    .bars-member-choice { color: #ffffff; font-size: 1.05rem; }
+    .bars-member-choice input[type="radio"] { margin-top: 0; }
     .help-text { min-height: 1.2rem; }
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }

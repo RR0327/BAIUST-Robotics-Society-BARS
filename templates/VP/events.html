@@ -227,13 +227,84 @@
     </div>
 </div>
 
-    <!-- Call to Action -->
-    <div class="cyber-card text-center p-5 mt-5">
+    <!-- Event Proposal Trigger -->
+    <div id="proposal-trigger-card" class="cyber-card text-center p-4 mt-5">
         <h3 class="glow-text mb-3">ORGANIZE AN EVENT WITH US</h3>
-        <p class="lead mb-4">Want to host a workshop, competition, or tech talk?</p>
-        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=bars8thpanel@gmail.com" target="_blank" rel="noopener noreferrer" class="btn btn-cyber btn-lg">
-            <i class="bi bi-envelope me-2"></i>Propose an Event
-        </a>
+        <p class="text-light mb-4">Want to host a workshop, competition, or tech talk?</p>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 text-start">
+                <label for="proposal-mode-select" class="form-label text-cyan small fw-bold">CHOOSE OPTION</label>
+                <select id="proposal-mode-select" class="form-select bg-dark text-light border-cyan">
+                    <option value="" selected>Select one option</option>
+                    <option value="form">Form</option>
+                    <option value="email">Direct Email</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Proposal + Direct Mail -->
+    <div id="proposal-options-wrapper" class="mt-4 d-none">
+
+        <div id="proposal-form-panel" class="d-none">
+            <div class="text-center mb-4">
+                <h3 class="glow-text mb-2">PROPOSE AN EVENT</h3>
+                <p class="text-cyan mb-0">Fill out the form and we will review your idea.</p>
+            </div>
+
+            <form id="event-proposal-form" class="cyber-form">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-cyan small fw-bold">YOUR NAME</label>
+                        <input type="text" name="name" class="form-control bg-dark text-light border-cyan" placeholder="Enter your full name" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-cyan small fw-bold">EMAIL</label>
+                        <input type="email" name="email" class="form-control bg-dark text-light border-cyan" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-cyan small fw-bold">EVENT NAME</label>
+                        <input type="text" name="event_name" class="form-control bg-dark text-light border-cyan" placeholder="Event title" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-cyan small fw-bold">EVENT CATEGORY</label>
+                        <select name="category" class="form-select bg-dark text-light border-cyan" required>
+                            <option value="" selected disabled>Select category</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Competition">Competition</option>
+                            <option value="Seminar">Seminar</option>
+                            <option value="Hackathon">Hackathon</option>
+                            <option value="Webinar">Webinar</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label text-cyan small fw-bold">DETAILS / DESCRIPTION</label>
+                        <textarea name="details" class="form-control bg-dark text-light border-cyan" rows="5" placeholder="Tell us what you want to organize, expected date, audience, and any important details..." required></textarea>
+                    </div>
+
+                    <div class="col-12 d-grid mt-2">
+                        <button type="submit" class="btn btn-cyber btn-lg">
+                            <i class="bi bi-send me-2"></i>Submit Proposal
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="proposal-email-panel" class="d-none">
+            <div class="cyber-card p-4 p-md-5 d-flex flex-column justify-content-center text-center">
+              
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=bars8thpanel@gmail.com" target="_blank" rel="noopener noreferrer" class="btn btn-cyber btn-lg">
+                    <i class="bi bi-envelope me-2"></i>Propose an Event
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -321,6 +392,103 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
         });
     });
+
+    // Event proposal form: opens email client with the form contents
+    const proposalForm = document.getElementById('event-proposal-form');
+    const proposalOptionsWrapper = document.getElementById('proposal-options-wrapper');
+    const proposalModeSelect = document.getElementById('proposal-mode-select');
+    const proposalFormPanel = document.getElementById('proposal-form-panel');
+    const proposalEmailPanel = document.getElementById('proposal-email-panel');
+
+    function toggleProposalPanel() {
+        if (!proposalModeSelect || !proposalFormPanel || !proposalEmailPanel || !proposalOptionsWrapper) return;
+
+        const mode = proposalModeSelect.value;
+        const hasSelection = mode === 'form' || mode === 'email';
+
+        proposalOptionsWrapper.classList.toggle('d-none', !hasSelection);
+        proposalFormPanel.classList.toggle('d-none', mode !== 'form');
+        proposalEmailPanel.classList.toggle('d-none', mode !== 'email');
+    }
+
+    if (proposalModeSelect) {
+        proposalModeSelect.addEventListener('change', toggleProposalPanel);
+        toggleProposalPanel();
+    }
+
+    if (proposalForm) {
+        proposalForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(proposalForm);
+            const name = formData.get('name') || '';
+            const email = formData.get('email') || '';
+            const eventName = formData.get('event_name') || '';
+            const category = formData.get('category') || '';
+            const details = formData.get('details') || '';
+
+            const subject = `Event Proposal: ${eventName}`;
+            const body = [
+                `Name: ${name}`,
+                `Email: ${email}`,
+                `Event Name: ${eventName}`,
+                `Event Category: ${category}`,
+                '',
+                'Details:',
+                details,
+            ].join('\n');
+
+            const mailtoUrl = `mailto:bars8thpanel@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        });
+    }
 });
 </script>
+
+<style>
+    .cyber-card-orange {
+        background: linear-gradient(135deg, rgba(15, 15, 15, 0.96), rgba(255, 107, 0, 0.08));
+        border: 2px solid var(--primary-orange);
+        border-radius: 12px;
+        box-shadow: 0 0 18px rgba(255, 107, 0, 0.18);
+    }
+
+    .cyber-form .form-control,
+    .cyber-form .form-select {
+        min-height: 46px;
+    }
+
+    .cyber-form textarea.form-control {
+        min-height: 140px;
+    }
+
+    .btn-cyber-orange {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--primary-orange));
+        border: none;
+        color: #000;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .btn-cyber-orange:hover {
+        color: #000;
+        box-shadow: 0 0 24px rgba(255, 107, 0, 0.55);
+    }
+
+    .proposal-options-visible {
+        animation: revealProposalOptions 0.4s ease;
+    }
+
+    @keyframes revealProposalOptions {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 {% endblock %}

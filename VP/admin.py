@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django import forms
+from django.core.exceptions import ValidationError
 from .models import (
     Panel,
     Member,
@@ -7,8 +9,30 @@ from .models import (
     EventPhoto,
     EventResult,
     Achievement,
+    GeneralMemberApplication,
     UserProfile,
 )
+
+
+class UserProfileAdminForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = "__all__"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_bars_member = cleaned_data.get("is_bars_member")
+        position_name = cleaned_data.get("position_name")
+
+        if is_bars_member and not position_name:
+            raise ValidationError({
+                "position_name": "Position Name is required when user is a BARS member."
+            })
+
+        if not is_bars_member:
+            cleaned_data["position_name"] = None
+
+        return cleaned_data
 
 
 class PanelAdmin(admin.ModelAdmin):
@@ -97,28 +121,25 @@ class EventAdmin(admin.ModelAdmin):
 
 
 class UserProfileAdmin(admin.ModelAdmin):
+    form = UserProfileAdminForm
     list_display = [
         "user",
         "user_type",
+        "is_bars_member",
+        "position_name",
         "panel",
         "student_id",
-        "payment_method_label",
-        "payment_reference",
     ]
-    list_filter = ["user_type", "panel", "payment_method", "created_at"]
+    list_filter = ["user_type", "is_bars_member", "position_name", "panel", "created_at"]
     search_fields = [
         "user__username",
         "user__email",
         "student_id",
         "phone",
-        "payment_reference",
+        "position_name",
     ]
     ordering = ["-created_at"]
     readonly_fields = ["created_at"]
-
-    @admin.display(description="Payment Method", ordering="payment_method")
-    def payment_method_label(self, obj):
-        return obj.get_payment_method_display()
 
     fieldsets = (
         ("User Account", {
@@ -126,11 +147,11 @@ class UserProfileAdmin(admin.ModelAdmin):
         }),
         ("Profile Information", {
             "fields": (
+                "is_bars_member",
+                "position_name",
                 "panel",
                 "student_id",
                 "phone",
-                "payment_method",
-                "payment_reference",
             )
         }),
         ("Metadata", {
@@ -191,6 +212,17 @@ class AchievementAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at"]
 
 
+class GeneralMemberApplicationAdmin(admin.ModelAdmin):
+    list_display = ["title", "is_active", "form_url"]
+    list_filter = ["is_active"]
+    search_fields = ["title", "form_url"]
+    fieldsets = (
+        ("Application Link", {
+            "fields": ("title", "form_url", "is_active")
+        }),
+    )
+
+
 # Register models
 admin.site.register(Panel, PanelAdmin)
 admin.site.register(Member, MemberAdmin)
@@ -199,4 +231,5 @@ admin.site.register(Event, EventAdmin)
 admin.site.register(EventPhoto, EventPhotoAdmin)
 admin.site.register(EventResult, EventResultAdmin)
 admin.site.register(Achievement, AchievementAdmin)
+admin.site.register(GeneralMemberApplication, GeneralMemberApplicationAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
