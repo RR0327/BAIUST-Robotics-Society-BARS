@@ -236,7 +236,7 @@
             <div class="col-md-8 col-lg-6 text-start">
                 <label for="proposal-mode-select" class="form-label text-cyan small fw-bold">CHOOSE OPTION</label>
                 <select id="proposal-mode-select" class="form-select bg-dark text-light border-cyan">
-                    <option value="" selected>Select one option</option>
+                    <option value="" selected disabled>Select one option</option>
                     <option value="form">Form</option>
                     <option value="email">Direct Email</option>
                 </select>
@@ -253,7 +253,8 @@
                 <p class="text-cyan mb-0">Fill out the form and we will review your idea.</p>
             </div>
 
-            <form id="event-proposal-form" class="cyber-form">
+            <form id="event-proposal-form" class="cyber-form" method="POST">
+                {% csrf_token %}
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label text-cyan small fw-bold">YOUR NAME</label>
@@ -393,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Event proposal form: opens email client with the form contents
+    // Event proposal form: send securely to backend endpoint
     const proposalForm = document.getElementById('event-proposal-form');
     const proposalOptionsWrapper = document.getElementById('proposal-options-wrapper');
     const proposalModeSelect = document.getElementById('proposal-mode-select');
@@ -420,26 +421,60 @@ document.addEventListener('DOMContentLoaded', function() {
         proposalForm.addEventListener('submit', function(event) {
             event.preventDefault();
 
+            const submitBtn = proposalForm.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="bi bi-broadcast-pin spin me-2"></i>Submitting...';
+                submitBtn.disabled = true;
+            }
+
             const formData = new FormData(proposalForm);
-            const name = formData.get('name') || '';
-            const email = formData.get('email') || '';
-            const eventName = formData.get('event_name') || '';
-            const category = formData.get('category') || '';
-            const details = formData.get('details') || '';
 
-            const subject = `Event Proposal: ${eventName}`;
-            const body = [
-                `Name: ${name}`,
-                `Email: ${email}`,
-                `Event Name: ${eventName}`,
-                `Event Category: ${category}`,
-                '',
-                'Details:',
-                details,
-            ].join('\n');
+            fetch('/submit-event-proposal/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (submitBtn) {
+                        submitBtn.innerHTML = '<i class="bi bi-check-all me-2"></i>Proposal Sent';
+                        submitBtn.classList.remove('btn-cyber');
+                        submitBtn.classList.add('btn-success');
+                    }
 
-            const mailtoUrl = `mailto:bars8thpanel@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailtoUrl;
+                    proposalForm.reset();
+
+                    setTimeout(() => {
+                        if (submitBtn) {
+                            submitBtn.innerHTML = originalBtnHtml;
+                            submitBtn.disabled = false;
+                            submitBtn.classList.remove('btn-success');
+                            submitBtn.classList.add('btn-cyber');
+                        }
+                    }, 2500);
+                } else {
+                    throw new Error(data.message || 'Submission failed.');
+                }
+            })
+            .catch(() => {
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Submission Failed';
+                    submitBtn.classList.remove('btn-cyber');
+                    submitBtn.classList.add('btn-danger');
+                    submitBtn.disabled = false;
+
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalBtnHtml;
+                        submitBtn.classList.remove('btn-danger');
+                        submitBtn.classList.add('btn-cyber');
+                    }, 3000);
+                }
+            });
         });
     }
 });

@@ -25,6 +25,7 @@ urlpatterns = [
     path("developers/", views.developers_view, name="developers"),
     # THE UPLINK ROUTE
     path("submit-triumph/", views.submit_triumph, name="submit_triumph"),
+    path("submit-event-proposal/", views.submit_event_proposal, name="submit_event_proposal"),
     # Password reset urls (using Django's built-in auth views)
     path(
         "password-reset/",

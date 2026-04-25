@@ -26,6 +26,20 @@
                         <i class="bi bi-journal-text text-orange display-4"></i>
                         {% elif achievement.category == "innovation" %}
                         <i class="bi bi-cpu text-cyan display-4"></i>
+                        {% elif achievement.category == "autonomous_robot_challenge" %}
+                        <i class="bi bi-robot text-cyan display-4"></i>
+                        {% elif achievement.category == "line_following_robot_competition" %}
+                        <i class="bi bi-signpost-split text-orange display-4"></i>
+                        {% elif achievement.category == "maze_solving_robot" %}
+                        <i class="bi bi-map text-cyan display-4"></i>
+                        {% elif achievement.category == "robo_soccer" %}
+                        <i class="bi bi-dribbble text-orange display-4"></i>
+                        {% elif achievement.category == "robo_race" %}
+                        <i class="bi bi-speedometer2 text-cyan display-4"></i>
+                        {% elif achievement.category == "combat_robotics_battle_bots" %}
+                        <i class="bi bi-shield-shaded text-orange display-4"></i>
+                        {% elif achievement.category == "drone_racing_uav_competition" %}
+                        <i class="bi bi-send text-cyan display-4"></i>
                         {% else %}
                         <i class="bi bi-star text-orange display-4"></i>
                         {% endif %}
@@ -142,12 +156,31 @@
 
                         <div class="col-12">
                             <label class="form-label text-cyan small fw-bold">CATEGORY</label>
-                            <select class="form-select bg-dark text-white border-cyan py-2">
+                            <select id="category-select" class="form-select bg-dark text-white border-cyan py-2" name="category">
                                 <option value="robotics">Robotics Competition</option>
                                 <option value="research">Research Publication</option>
                                 <option value="hackathon">Hackathon Victory</option>
                                 <option value="iot">IoT Innovation</option>
+                                <option value="autonomous_robot_challenge">Autonomous Robot Challenge</option>
+                                <option value="line_following_robot_competition">Line Following Robot Competition</option>
+                                <option value="maze_solving_robot">Maze Solving Robot</option>
+                                <option value="robo_soccer">Robo Soccer</option>
+                                <option value="robo_race">Robo Race</option>
+                                <option value="combat_robotics_battle_bots">Combat Robotics (Battle Bots)</option>
+                                <option value="drone_racing_uav_competition">Drone Racing / UAV Competition</option>
+                                <option value="other">Other</option>
                             </select>
+                        </div>
+
+                        <div class="col-12" id="other-category-wrapper" style="display: none;">
+                            <label class="form-label text-cyan small fw-bold">CATEGORY NAME</label>
+                            <input
+                                type="text"
+                                id="other-category-name"
+                                name="other_category_name"
+                                class="form-control bg-dark text-white border-cyan py-2"
+                                placeholder="[Enter category name]"
+                            >
                         </div>
 
                         <div class="col-12">
@@ -217,4 +250,29 @@
         color: #a0a0a0 !important;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const categorySelect = document.getElementById('category-select');
+        const otherCategoryWrapper = document.getElementById('other-category-wrapper');
+        const otherCategoryName = document.getElementById('other-category-name');
+
+        if (!categorySelect || !otherCategoryWrapper || !otherCategoryName) {
+            return;
+        }
+
+        function toggleOtherCategoryField() {
+            const isOtherSelected = categorySelect.value === 'other';
+            otherCategoryWrapper.style.display = isOtherSelected ? 'block' : 'none';
+            otherCategoryName.required = isOtherSelected;
+
+            if (!isOtherSelected) {
+                otherCategoryName.value = '';
+            }
+        }
+
+        categorySelect.addEventListener('change', toggleOtherCategoryField);
+        toggleOtherCategoryField();
+    });
+</script>
 {% endblock %}

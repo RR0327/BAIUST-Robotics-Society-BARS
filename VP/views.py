@@ -438,3 +438,47 @@ def submit_triumph(request):
     return JsonResponse(
         {"status": "error", "message": "Invalid request method."}, status=405
     )
+
+
+@csrf_protect
+def submit_event_proposal(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        email = request.POST.get("email", "").strip()
+        event_name = request.POST.get("event_name", "").strip()
+        category = request.POST.get("category", "").strip()
+        details = request.POST.get("details", "").strip()
+
+        if not name or not email or not event_name or not category or not details:
+            return JsonResponse(
+                {"status": "error", "message": "All fields required."}, status=400
+            )
+
+        subject = f"BARS EVENT PROPOSAL: {event_name}"
+        message = (
+            "Commander, a new event proposal has been submitted.\n\n"
+            f"Name: {name}\n"
+            f"Email: {email}\n"
+            f"Event Name: {event_name}\n"
+            f"Category: {category}\n\n"
+            "Details:\n"
+            f"{details}"
+        )
+
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.EMAIL_HOST_USER],
+                fail_silently=False,
+            )
+            return JsonResponse({"status": "success"})
+        except Exception:
+            return JsonResponse(
+                {"status": "error", "message": "SMTP Uplink Failed."}, status=500
+            )
+
+    return JsonResponse(
+        {"status": "error", "message": "Invalid request method."}, status=405
+    )
