@@ -328,6 +328,8 @@ class EventForm(forms.ModelForm):
             "status",
             "image",
             "registration_link",
+            "registration_deadline",
+            "capacity",
         ]
         widgets = {
             "title": forms.TextInput(
@@ -376,6 +378,21 @@ class EventForm(forms.ModelForm):
                     "class": "form-control bg-dark text-light border-cyan",
                     "placeholder": "https://forms.google.com/...",
                     "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+                }
+            ),
+            "registration_deadline": forms.DateTimeInput(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "type": "datetime-local",
+                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+                }
+            ),
+            "capacity": forms.NumberInput(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "placeholder": "Unlimited (leave blank)",
+                    "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+                    "min": "1",
                 }
             ),
         }

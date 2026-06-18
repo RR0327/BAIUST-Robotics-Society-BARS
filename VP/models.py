@@ -141,6 +141,8 @@ class Event(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     image = models.ImageField(upload_to="events/", blank=True, null=True)
     registration_link = models.URLField(blank=True)
+    registration_deadline = models.DateTimeField(null=True, blank=True)
+    capacity = models.PositiveIntegerField(null=True, blank=True, help_text="Leave blank or set to null for unlimited seats.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -148,6 +150,27 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_registration_open(self):
+        from django.utils import timezone
+        if self.status != "Upcoming":
+            return False
+        if self.registration_deadline and timezone.now() > self.registration_deadline:
+            return False
+        if self.capacity is not None and self.registration_count >= self.capacity:
+            return False
+        return True
+
+    @property
+    def registration_count(self):
+        return self.registrations.count()
+
+    @property
+    def remaining_seats(self):
+        if self.capacity is None:
+            return None
+        return max(0, self.capacity - self.registration_count)
 
 
 class EventPhoto(models.Model):
@@ -192,6 +215,44 @@ class EventResult(models.Model):
 
     def __str__(self):
         return f"{self.event.title} - {self.rank}: {self.participant_name}"
+
+
+class EventRegistration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_registrations")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="registrations")
+    registered_at = models.DateTimeField(auto_now_add=True)
+    qr_code = models.ImageField(upload_to="registrations/", blank=True, null=True)
+
+    class Meta:
+        unique_together = ('user', 'event')
+        ordering = ['-registered_at']
+
+    def __str__(self):
+        return f"{self.user.username} registered for {self.event.title}"
+
+    def generate_qr_code(self):
+        import qrcode
+        from io import BytesIO
+        from django.core.files import File
+        
+        qr_content = f"Registration ID: {self.id} | User: {self.user.username} | Event: {self.event.title}"
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(qr_content)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        filename = f"ticket_qr_{self.id}.png"
+        self.qr_code.save(filename, File(buffer), save=False)
+        # Avoid recursion by updating only the qr_code column directly
+        EventRegistration.objects.filter(pk=self.pk).update(qr_code=self.qr_code.name)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            self.generate_qr_code()
 
 
 class Achievement(models.Model):
@@ -290,3 +351,26 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.user_type}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        
+        # Automatically make admin users staff and grant permissions
+        if self.user_type == "admin":
+            if not self.user.is_staff:
+                self.user.is_staff = True
+                self.user.save()
+            
+            # Grant all permissions for the 'VP' app
+            from django.contrib.auth.models import Permission
+            permissions = Permission.objects.filter(content_type__app_label='VP')
+            self.user.user_permissions.set(permissions)
+        else:
+            # If not admin, ensure they are not staff (unless superuser) and clean up VP permissions
+            if not self.user.is_superuser and self.user.is_staff:
+                self.user.is_staff = False
+                self.user.save()
+                
+                from django.contrib.auth.models import Permission
+                permissions = Permission.objects.filter(content_type__app_label='VP')
+                self.user.user_permissions.remove(*permissions)

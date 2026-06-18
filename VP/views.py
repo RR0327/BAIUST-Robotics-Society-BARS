@@ -1,4 +1,6 @@
 import csv
+import json
+import os
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
@@ -11,7 +13,15 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_protect
 
-from .models import Panel, Member, Advisor, Event, EventResult, Achievement, UserProfile
+from openpyxl import Workbook
+from openpyxl.styles import Font as XLFont, Alignment as XLAlignment, PatternFill as XLPatternFill, Border as XLBorder, Side as XLSide
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+from .models import Panel, Member, Advisor, Event, EventResult, Achievement, UserProfile, EventRegistration
 from .forms import RegistrationForm, UserUpdateForm, UserProfileForm, LoginForm
 
 # --- Helper Functions ---
@@ -132,9 +142,23 @@ def event_detail(request, event_id):
         .order_by("-date")[:3]
     )
 
+    is_registered = False
+    registration = None
+    if request.user.is_authenticated:
+        registration = EventRegistration.objects.filter(user=request.user, event=event).first()
+        if registration:
+            is_registered = True
+            # Retrofit QR code on load if it's missing (e.g. for existing registrations)
+            if not registration.qr_code:
+                registration.generate_qr_code()
+                registration.refresh_from_db()
+
     context = {
         "event": event,
         "similar_events": similar_events,
+        "is_registered": is_registered,
+        "registration": registration,
+        "is_registration_open": event.is_registration_open,
     }
     return render(request, "VP/event_detail.html", context)
 
@@ -290,6 +314,12 @@ def user_dashboard(request):
     )[:4]
     latest_achievements = Achievement.objects.all()[:3]
 
+    registered_event_ids = set()
+    if request.user.is_authenticated:
+        registered_event_ids = set(
+            request.user.event_registrations.values_list("event_id", flat=True)
+        )
+
     context = {
         "profile": profile,
         "member_record": member_record,
@@ -299,6 +329,7 @@ def user_dashboard(request):
         "total_events": Event.objects.count(),
         "total_members": active_member_count,
         "panel_count": Panel.objects.count(),
+        "registered_event_ids": registered_event_ids,
     }
     return render(request, "VP/user_dashboard.html", context)
 
@@ -482,3 +513,441 @@ def submit_event_proposal(request):
     return JsonResponse(
         {"status": "error", "message": "Invalid request method."}, status=405
     )
+
+
+# --- Admin Intelligence Export Terminal & Document Generators ---
+
+class NumberedCanvas(canvas.Canvas):
+    """Canvas class to generate 'Page X of Y' for ReportLab PDF documents."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_number(self, page_count):
+        self.saveState()
+        self.setFont("Helvetica", 9)
+        self.setFillColor(colors.HexColor("#666666"))
+        
+        # Bottom rule divider
+        self.setStrokeColor(colors.HexColor("#00F3FF"))
+        self.setLineWidth(0.5)
+        self.line(36, 45, 576, 45) # 0.5in margins: letter width 612 -> page width 540
+        
+        # Footer text
+        self.drawString(36, 30, "BAIUST Robotics Society - SECURE REPORT")
+        self.drawRightString(576, 30, f"Page {self._pageNumber} of {page_count}")
+        self.restoreState()
+
+
+def generate_csv_response(resource_name, queryset):
+    response = HttpResponse(content_type="text/csv")
+    filename = f"BARS_{resource_name}_{datetime.now().strftime('%Y-%m-%d')}.csv"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    
+    writer = csv.writer(response)
+    if resource_name == "members":
+        writer.writerow(["FULL NAME", "ROLE", "DEPARTMENT", "PANEL YEAR", "EMAIL", "MOBILE NUMBER", "LINKEDIN", "GITHUB"])
+        for m in queryset:
+            writer.writerow([m.name, m.role, m.get_department_display(), m.panel.year if m.panel else '', m.email, m.mobile_number or '', m.linkedin, m.github])
+    elif resource_name == "events":
+        writer.writerow(["TITLE", "DATE", "END DATE", "LOCATION", "STATUS", "DESCRIPTION"])
+        for e in queryset:
+            writer.writerow([e.title, e.date.strftime('%Y-%m-%d %H:%M') if e.date else '', e.end_date.strftime('%Y-%m-%d %H:%M') if e.end_date else '', e.location, e.status, e.description])
+    elif resource_name == "registrations":
+        writer.writerow(["USERNAME", "FULL NAME", "EMAIL", "USER TYPE", "STUDENT ID", "PHONE", "IS BARS MEMBER", "POSITION NAME", "CREATED AT"])
+        for u in queryset:
+            writer.writerow([u.user.username, u.user.get_full_name(), u.user.email, u.get_user_type_display(), u.student_id, u.phone, "Yes" if u.is_bars_member else "No", u.position_name or '', u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else ''])
+            
+    return response
+
+
+def generate_json_response(resource_name, queryset):
+    data = []
+    if resource_name == "members":
+        for m in queryset:
+            data.append({
+                "name": m.name,
+                "role": m.role,
+                "department": m.get_department_display(),
+                "panel_year": m.panel.year if m.panel else '',
+                "email": m.email,
+                "mobile_number": m.mobile_number or '',
+                "linkedin": m.linkedin,
+                "github": m.github
+            })
+    elif resource_name == "events":
+        for e in queryset:
+            data.append({
+                "title": e.title,
+                "date": e.date.strftime('%Y-%m-%d %H:%M') if e.date else '',
+                "end_date": e.end_date.strftime('%Y-%m-%d %H:%M') if e.end_date else '',
+                "location": e.location,
+                "status": e.status,
+                "description": e.description
+            })
+    elif resource_name == "registrations":
+        for u in queryset:
+            data.append({
+                "username": u.user.username,
+                "full_name": u.user.get_full_name(),
+                "email": u.user.email,
+                "user_type": u.get_user_type_display(),
+                "student_id": u.student_id,
+                "phone": u.phone,
+                "is_bars_member": u.is_bars_member,
+                "position_name": u.position_name or '',
+                "created_at": u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else ''
+            })
+            
+    response = HttpResponse(json.dumps(data, indent=4), content_type="application/json")
+    filename = f"BARS_{resource_name}_{datetime.now().strftime('%Y-%m-%d')}.json"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+def generate_excel_response(resource_name, queryset):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = resource_name.capitalize()
+    ws.views.sheetView[0].showGridLines = True
+    
+    font_title = XLFont(name="Segoe UI", size=14, bold=True, color="FF6B00")
+    font_header = XLFont(name="Segoe UI", size=11, bold=True, color="00F3FF")
+    fill_header = XLPatternFill(start_color="001F3F", end_color="001F3F", fill_type="solid")
+    alignment_center = XLAlignment(horizontal="center", vertical="center")
+    alignment_left = XLAlignment(horizontal="left", vertical="center")
+    border_thin = XLBorder(
+        left=XLSide(style='thin', color='CCCCCC'),
+        right=XLSide(style='thin', color='CCCCCC'),
+        top=XLSide(style='thin', color='CCCCCC'),
+        bottom=XLSide(style='thin', color='CCCCCC')
+    )
+    
+    # Title Block
+    ws.append([f"BAIUST ROBOTICS SOCIETY - {resource_name.upper()} DATA EXPORT"])
+    ws.row_dimensions[1].height = 35
+    ws.merge_cells("A1:H1")
+    ws["A1"].font = font_title
+    ws["A1"].alignment = alignment_center
+    ws["A1"].fill = XLPatternFill(start_color="0D0D0D", end_color="0D0D0D", fill_type="solid")
+    
+    ws.append([]) # Spacer row
+    
+    if resource_name == "members":
+        headers = ["Full Name", "Role", "Department", "Panel Year", "Email", "Mobile Number", "LinkedIn", "GitHub"]
+    elif resource_name == "events":
+        headers = ["Title", "Date", "End Date", "Location", "Status", "Description"]
+    elif resource_name == "registrations":
+        headers = ["Username", "Full Name", "Email", "User Type", "Student ID", "Phone", "Is BARS Member", "Position Name", "Created At"]
+    else:
+        headers = []
+        
+    ws.append(headers)
+    header_row_idx = 3
+    ws.row_dimensions[header_row_idx].height = 25
+    
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=header_row_idx, column=col_num)
+        cell.font = font_header
+        cell.fill = fill_header
+        cell.alignment = alignment_center
+        cell.border = border_thin
+        
+    row_idx = 4
+    if resource_name == "members":
+        for m in queryset:
+            row_data = [m.name, m.role, m.get_department_display(), m.panel.year if m.panel else '', m.email, m.mobile_number or '', m.linkedin, m.github]
+            ws.append(row_data)
+            row_idx += 1
+    elif resource_name == "events":
+        for e in queryset:
+            row_data = [e.title, e.date.strftime('%Y-%m-%d %H:%M') if e.date else '', e.end_date.strftime('%Y-%m-%d %H:%M') if e.end_date else '', e.location, e.status, e.description]
+            ws.append(row_data)
+            row_idx += 1
+    elif resource_name == "registrations":
+        for u in queryset:
+            row_data = [u.user.username, u.user.get_full_name(), u.user.email, u.get_user_type_display(), u.student_id, u.phone, "Yes" if u.is_bars_member else "No", u.position_name or '', u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else '']
+            ws.append(row_data)
+            row_idx += 1
+            
+    fill_even = XLPatternFill(start_color="F9F9F9", end_color="F9F9F9", fill_type="solid")
+    fill_odd = XLPatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+    
+    for r in range(4, row_idx):
+        ws.row_dimensions[r].height = 20
+        is_even = (r % 2 == 0)
+        row_fill = fill_even if is_even else fill_odd
+        for c in range(1, len(headers) + 1):
+            cell = ws.cell(row=r, column=c)
+            cell.border = border_thin
+            cell.fill = row_fill
+            cell.alignment = alignment_left
+            cell.font = XLFont(name="Segoe UI", size=10)
+
+    from openpyxl.utils import get_column_letter
+    for col in ws.columns:
+        max_len = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            if cell.row == 1:
+                continue
+            val_str = str(cell.value or '')
+            if len(val_str) > max_len:
+                max_len = len(val_str)
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+        
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    filename = f"BARS_{resource_name}_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+def generate_pdf_response(resource_name, queryset):
+    response = HttpResponse(content_type="application/pdf")
+    filename = f"BARS_{resource_name}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=letter,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=54
+    )
+    
+    story = []
+    styles = getSampleStyleSheet()
+    
+    style_title = ParagraphStyle(
+        "ReportTitle",
+        parent=styles["Title"],
+        fontName="Helvetica-Bold",
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor("#001F3F"),
+        alignment=0
+    )
+    style_subtitle = ParagraphStyle(
+        "ReportSubtitle",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor("#666666")
+    )
+    style_cell = ParagraphStyle(
+        "CellText",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor("#333333")
+    )
+    style_cell_bold = ParagraphStyle(
+        "CellTextBold",
+        parent=style_cell,
+        fontName="Helvetica-Bold",
+        textColor=colors.HexColor("#001F3F")
+    )
+    style_header = ParagraphStyle(
+        "TableHeaderText",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=11,
+        textColor=colors.HexColor("#00F3FF"),
+        alignment=1
+    )
+    
+    logo_path = os.path.join(settings.BASE_DIR, 'media', 'logo.png')
+    
+    title_text = f"BAIUST ROBOTICS SOCIETY<br/><font color='#FF6B00' size='13'><b>{resource_name.upper()} OFFICIAL REPORT</b></font>"
+    title_para = Paragraph(title_text, style_title)
+    
+    meta_text = f"<b>Generated:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}<br/><b>Status:</b> SECURE ONLINE EXTRACT | BARS MAINFRAME"
+    meta_para = Paragraph(meta_text, style_subtitle)
+    
+    left_cell = [title_para, Spacer(1, 4), meta_para]
+    
+    if os.path.exists(logo_path):
+        try:
+            logo_img = Image(logo_path, width=45, height=45)
+            header_table = Table([[left_cell, logo_img]], colWidths=[465, 75])
+        except Exception:
+            header_table = Table([[left_cell, '']], colWidths=[465, 75])
+    else:
+        header_table = Table([[left_cell, '']], colWidths=[465, 75])
+        
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (1,0), (1,0), 'RIGHT'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+    ]))
+    
+    story.append(header_table)
+    
+    divider = Table([['']], colWidths=[540], rowHeights=[2])
+    divider.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#00F3FF")),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+    story.append(divider)
+    story.append(Spacer(1, 12))
+    
+    table_data = []
+    if resource_name == "members":
+        headers = ["Full Name", "Role / Designation", "Dept", "Panel", "Email", "Mobile"]
+        col_widths = [110, 110, 50, 50, 130, 90]
+        table_data.append([Paragraph(h, style_header) for h in headers])
+        for m in queryset:
+            table_data.append([
+                Paragraph(m.name, style_cell_bold),
+                Paragraph(m.role, style_cell),
+                Paragraph(m.get_department_display(), style_cell),
+                Paragraph(m.panel.year if m.panel else '', style_cell),
+                Paragraph(m.email, style_cell),
+                Paragraph(m.mobile_number or '', style_cell),
+            ])
+            
+    elif resource_name == "events":
+        headers = ["Title", "Date", "Location", "Status", "Description"]
+        col_widths = [110, 85, 90, 60, 195]
+        table_data.append([Paragraph(h, style_header) for h in headers])
+        for e in queryset:
+            desc = e.description
+            if len(desc) > 150:
+                desc = desc[:147] + "..."
+            table_data.append([
+                Paragraph(e.title, style_cell_bold),
+                Paragraph(e.date.strftime('%Y-%m-%d %H:%M') if e.date else '', style_cell),
+                Paragraph(e.location, style_cell),
+                Paragraph(e.status, style_cell),
+                Paragraph(desc, style_cell),
+            ])
+            
+    elif resource_name == "registrations":
+        headers = ["Username", "Full Name", "Email", "Type", "Student ID", "Phone", "Member"]
+        col_widths = [75, 95, 110, 50, 55, 95, 60]
+        table_data.append([Paragraph(h, style_header) for h in headers])
+        for u in queryset:
+            table_data.append([
+                Paragraph(u.user.username, style_cell_bold),
+                Paragraph(u.user.get_full_name(), style_cell),
+                Paragraph(u.user.email, style_cell),
+                Paragraph(u.get_user_type_display(), style_cell),
+                Paragraph(u.student_id, style_cell),
+                Paragraph(u.phone, style_cell),
+                Paragraph("Yes" if u.is_bars_member else "No", style_cell),
+            ])
+            
+    report_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    ts = TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#001F3F")),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),
+    ])
+    
+    for i in range(1, len(table_data)):
+        if i % 2 == 0:
+            ts.add('BACKGROUND', (0, i), (-1, i), colors.HexColor("#F8FAFC"))
+        else:
+            ts.add('BACKGROUND', (0, i), (-1, i), colors.white)
+            
+    report_table.setStyle(ts)
+    story.append(report_table)
+    
+    doc.build(story, canvasmaker=NumberedCanvas)
+    return response
+
+
+@login_required
+@user_passes_test(is_admin)
+def export_data(request):
+    """Unified API endpoint to export various society resources in different file formats."""
+    resource = request.GET.get("resource", "members")
+    fmt = request.GET.get("format", "csv")
+    
+    if resource == "members":
+        queryset = Member.objects.all().select_related("panel").order_by("order", "name")
+    elif resource == "events":
+        queryset = Event.objects.all().order_by("-date")
+    elif resource == "registrations":
+        queryset = UserProfile.objects.all().select_related("user", "panel").order_by("-created_at")
+    else:
+        return HttpResponse("Invalid resource specified", status=400)
+        
+    if fmt == "csv":
+        return generate_csv_response(resource, queryset)
+    elif fmt == "json":
+        return generate_json_response(resource, queryset)
+    elif fmt == "excel" or fmt == "xlsx":
+        return generate_excel_response(resource, queryset)
+    elif fmt == "pdf":
+        return generate_pdf_response(resource, queryset)
+    else:
+        return HttpResponse("Invalid format specified", status=400)
+
+
+@login_required
+@csrf_protect
+def register_event(request, event_id):
+    """Handles event registration for authenticated users."""
+    if request.method != "POST":
+        return redirect("event_detail", event_id=event_id)
+        
+    event = get_object_or_404(Event, id=event_id)
+    
+    # Check if registration is open
+    if not event.is_registration_open:
+        if event.capacity is not None and event.registration_count >= event.capacity:
+            messages.error(request, "Registration failed: This event is already full.")
+        else:
+            messages.error(request, "Registration is closed for this event.")
+        return redirect("event_detail", event_id=event_id)
+        
+    # Check if already registered
+    already_registered = EventRegistration.objects.filter(user=request.user, event=event).exists()
+    if already_registered:
+        messages.warning(request, "You are already registered for this event.")
+        return redirect("event_detail", event_id=event_id)
+        
+    # Register the user
+    EventRegistration.objects.create(user=request.user, event=event)
+    
+    # Send confirmation email
+    subject = f"🎟 Your Event Ticket is Ready for {event.title}"
+    message = (
+        f"Hello {request.user.get_full_name() or request.user.username}\n\n"
+        f"You're registered for: {event.title}\n"
+        f"Your digital ticket has been generated.\n\n"
+        f"Thanks,\n"
+        f"BAIUST Robotics Society"
+    )
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [request.user.email],
+        fail_silently=True,
+    )
+
+    messages.success(request, "Your registration has been successfully.")
+    return redirect("event_detail", event_id=event_id)

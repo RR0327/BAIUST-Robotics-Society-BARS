@@ -70,11 +70,64 @@
                     </div>
                 </div>
                 <div class="mt-4 pt-4 border-top border-secondary">
-                    <h6 class="text-cyan mb-3">DATA EXPORT TERMINAL</h6>
-                    <p class="small text-muted mb-3">Generate official BAIUST roster report:</p>
-                    <a href="{% url 'export_members_csv' %}" class="btn btn-outline-cyber w-100 btn-sm">
-                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>EXPORT AS CSV
-                    </a>
+                    <h5 class="text-cyan mb-3"><i class="bi bi-download me-2"></i>DATA EXTRACTION SUITE</h5>
+                    
+                    <!-- Members Section -->
+                    <div class="mb-3">
+                        <span class="help-text d-block mb-1" style="font-size: 0.75rem;">Personnel Roster</span>
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'export_data' %}?resource=members&format=csv" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=members&format=json" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-braces"></i> JSON
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=members&format=excel" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-excel"></i> XLSX
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=members&format=pdf" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Events Section -->
+                    <div class="mb-3">
+                        <span class="help-text d-block mb-1" style="font-size: 0.75rem;">Operations (Events)</span>
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'export_data' %}?resource=events&format=csv" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=events&format=json" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-braces"></i> JSON
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=events&format=excel" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-excel"></i> XLSX
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=events&format=pdf" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- User Registrations Section -->
+                    <div>
+                        <span class="help-text d-block mb-1" style="font-size: 0.75rem;">User Registrations</span>
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'export_data' %}?resource=registrations&format=csv" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=registrations&format=json" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-braces"></i> JSON
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=registrations&format=excel" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-excel"></i> XLSX
+                            </a>
+                            <a href="{% url 'export_data' %}?resource=registrations&format=pdf" class="btn btn-outline-cyber btn-sm py-1 px-2" style="font-size: 0.7rem;">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -11,7 +11,46 @@ from .models import (
     Achievement,
     GeneralMemberApplication,
     UserProfile,
+    EventRegistration,
 )
+from .views import (
+    generate_csv_response,
+    generate_json_response,
+    generate_excel_response,
+    generate_pdf_response,
+)
+
+
+def export_selected_to_csv(modeladmin, request, queryset):
+    """Admin action to export selected records to CSV format."""
+    model_name = queryset.model.__name__.lower()
+    resource = "members" if model_name == "member" else ("events" if model_name == "event" else "registrations")
+    return generate_csv_response(resource, queryset)
+export_selected_to_csv.short_description = "Export selected to CSV"
+
+
+def export_selected_to_json(modeladmin, request, queryset):
+    """Admin action to export selected records to JSON format."""
+    model_name = queryset.model.__name__.lower()
+    resource = "members" if model_name == "member" else ("events" if model_name == "event" else "registrations")
+    return generate_json_response(resource, queryset)
+export_selected_to_json.short_description = "Export selected to JSON"
+
+
+def export_selected_to_excel(modeladmin, request, queryset):
+    """Admin action to export selected records to Excel (XLSX) format."""
+    model_name = queryset.model.__name__.lower()
+    resource = "members" if model_name == "member" else ("events" if model_name == "event" else "registrations")
+    return generate_excel_response(resource, queryset)
+export_selected_to_excel.short_description = "Export selected to Excel (XLSX)"
+
+
+def export_selected_to_pdf(modeladmin, request, queryset):
+    """Admin action to export selected records to PDF format."""
+    model_name = queryset.model.__name__.lower()
+    resource = "members" if model_name == "member" else ("events" if model_name == "event" else "registrations")
+    return generate_pdf_response(resource, queryset)
+export_selected_to_pdf.short_description = "Export selected to PDF (BARS Branded)"
 
 
 class UserProfileAdminForm(forms.ModelForm):
@@ -44,6 +83,7 @@ class PanelAdmin(admin.ModelAdmin):
 
 class MemberAdmin(admin.ModelAdmin):
     list_display = ["name", "role", "department", "panel", "email", "mobile_number", "order"]
+    actions = [export_selected_to_csv, export_selected_to_json, export_selected_to_excel, export_selected_to_pdf]
     list_filter = ["role", "department", "panel"]
     search_fields = ["name", "email", "mobile_number", "bio"]
     ordering = ["order", "name"]
@@ -97,7 +137,8 @@ class EventResultInline(admin.TabularInline):
 
 
 class EventAdmin(admin.ModelAdmin):
-    list_display = ["title", "date", "end_date", "status", "location"]
+    list_display = ["title", "date", "end_date", "registration_deadline", "capacity", "status", "location", "registration_count"]
+    actions = [export_selected_to_csv, export_selected_to_json, export_selected_to_excel, export_selected_to_pdf]
     list_filter = ["status", "date", "created_at"]
     search_fields = ["title", "description", "location"]
     ordering = ["-date"]
@@ -111,13 +152,17 @@ class EventAdmin(admin.ModelAdmin):
             "fields": ("date", "end_date", "location", "status")
         }),
         ("Registration", {
-            "fields": ("registration_link",)
+            "fields": ("registration_link", "registration_deadline", "capacity")
         }),
         ("Metadata", {
             "fields": ("created_at",),
             "classes": ("collapse",)
         }),
     )
+
+    def registration_count(self, obj):
+        return obj.registrations.count()
+    registration_count.short_description = "Registrations"
 
 
 class UserProfileAdmin(admin.ModelAdmin):
@@ -130,6 +175,7 @@ class UserProfileAdmin(admin.ModelAdmin):
         "panel",
         "student_id",
     ]
+    actions = [export_selected_to_csv, export_selected_to_json, export_selected_to_excel, export_selected_to_pdf]
     list_filter = ["user_type", "is_bars_member", "position_name", "panel", "created_at"]
     search_fields = [
         "user__username",
@@ -223,6 +269,13 @@ class GeneralMemberApplicationAdmin(admin.ModelAdmin):
     )
 
 
+class EventRegistrationAdmin(admin.ModelAdmin):
+    list_display = ["user", "event", "registered_at"]
+    list_filter = ["event", "registered_at"]
+    search_fields = ["user__username", "user__email", "event__title"]
+    ordering = ["-registered_at"]
+
+
 # Register models
 admin.site.register(Panel, PanelAdmin)
 admin.site.register(Member, MemberAdmin)
@@ -233,3 +286,4 @@ admin.site.register(EventResult, EventResultAdmin)
 admin.site.register(Achievement, AchievementAdmin)
 admin.site.register(GeneralMemberApplication, GeneralMemberApplicationAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
+admin.site.register(EventRegistration, EventRegistrationAdmin)

@@ -87,7 +87,7 @@
                     <a href="{% url 'event_detail' next_event.id %}" class="btn btn-cyber me-2">
                         <i class="bi bi-info-circle me-2"></i>Event Details
                     </a>
-                    {% if next_event.registration_link %}
+                    {% if next_event.registration_link and next_event.is_registration_open %}
                     <a href="{{ next_event.registration_link }}" target="_blank" class="btn btn-outline-cyber">
                         <i class="bi bi-pencil-square me-2"></i>Register Now
                     </a>
@@ -161,7 +161,7 @@
                             <i class="bi bi-info-circle me-1"></i>Details
                         </a>
                         
-                        {% if event.registration_link and event.status == 'Upcoming' %}
+                        {% if event.registration_link and event.is_registration_open %}
                         <a href="{{ event.registration_link }}" 
                            target="_blank" 
                            class="btn btn-sm btn-cyber flex-fill">
