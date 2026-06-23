@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container py-5">
     <div class="row mb-4">
@@ -43,74 +42,74 @@
     </div>
 
     <div class="row mb-5">
-        <div class="col-lg-8 mb-4">
-            <div class="cyber-card p-4 border-cyan h-100">
-                <h4 class="text-cyan mb-4"><i class="bi bi-graph-up-arrow me-2"></i>PERSONNEL GROWTH TRENDS</h4>
-                <div style="height: 300px;">
-                    <canvas id="growthChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4 mb-4">
-            <div class="cyber-card p-4 h-100">
-                <h4 class="text-orange mb-4"><i class="bi bi-pie-chart-fill me-2"></i>QUICK ANALYTICS</h4>
-                <div class="d-grid gap-3">
-                    <div class="d-flex justify-content-between">
-                        <span class="help-text">MEMBERS</span>
-                        <span class="badge bg-cyan text-dark">{{ total_members }}</span>
+        <div class="col-12">
+            <div class="cyber-card p-4">
+                <div class="row">
+                    <!-- Left Column: Quick Analytics -->
+                    <div class="col-lg-4 mb-4 mb-lg-0 border-end border-secondary pe-lg-4">
+                        <h4 class="text-orange mb-4"><i class="bi bi-pie-chart-fill me-2"></i>QUICK ANALYTICS</h4>
+                        <div class="d-grid gap-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="help-text">MEMBERS</span>
+                                <span class="badge bg-cyan text-dark">{{ total_members }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="help-text">TOTAL EVENT</span>
+                                <span class="badge bg-cyan text-dark">{{ total_events }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="help-text">PENDING</span>
+                                <span class="badge bg-orange text-dark">{{ upcoming_ops }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="help-text">TOTAL OPS</span>
-                        <span class="badge bg-cyan text-dark">{{ total_events }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="help-text">PENDING</span>
-                        <span class="badge bg-orange text-dark">{{ upcoming_ops }}</span>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-top border-secondary">
-                    <h5 class="text-cyan mb-3"><i class="bi bi-download me-2"></i>DATA EXTRACTION SUITE</h5>
                     
-                    <form method="GET" action="{% url 'export_data' %}" target="_blank">
-                        <!-- Resource Choice -->
-                        <div class="mb-3">
-                            <span class="help-text d-block mb-1" style="font-size: 0.75rem;">1. SELECT RESOURCE</span>
-                            <select name="resource" id="export-resource" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
-                                <option value="members" selected>Personnel Roster (Members)</option>
-                                <option value="events">Operations (Events)</option>
-                                <option value="registrations">User Registrations</option>
-                            </select>
-                        </div>
+                    <!-- Right Column: Data Extraction Suite -->
+                    <div class="col-lg-8 ps-lg-4">
+                        <h5 class="text-cyan mb-3"><i class="bi bi-download me-2"></i>DATA EXTRACTION SUITE</h5>
                         
-                        <!-- Panel Filter Choice -->
-                        <div class="mb-3" id="export-panel-wrapper">
-                            <span class="help-text d-block mb-1" style="font-size: 0.75rem;">2. FILTER BY PANEL</span>
-                            <select name="panel" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
-                                <option value="" selected>All Panels</option>
-                                {% for panel in panels %}
-                                <option value="{{ panel.id }}">{{ panel.year }} - {{ panel.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Format Choice -->
-                        <div class="mb-3">
-                            <span class="help-text d-block mb-1" style="font-size: 0.75rem;">3. SELECT FORMAT</span>
-                            <select name="format" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
-                                <option value="csv" selected>CSV (Spreadsheet)</option>
-                                <option value="excel">Excel (XLSX)</option>
-                                <option value="pdf">PDF (Branded Report)</option>
-                                <option value="json">JSON (Data Object)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="d-grid mt-3">
-                            <button type="submit" class="btn btn-outline-cyber btn-sm py-2">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>GENERATE & DOWNLOAD
-                            </button>
-                        </div>
-                    </form>
+                        <form method="GET" action="{% url 'export_data' %}" target="_blank">
+                            <div class="row">
+                                <!-- Resource Choice -->
+                                <div class="col-md-4 mb-3">
+                                    <span class="help-text d-block mb-1" style="font-size: 0.75rem;">1. SELECT RESOURCE</span>
+                                    <select name="resource" id="export-resource" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
+                                        <option value="members" selected>Personnel Roster (Members)</option>
+                                        <option value="events">Operations (Events)</option>
+                                        <option value="registrations">User Registrations</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Panel Filter Choice -->
+                                <div class="col-md-4 mb-3" id="export-panel-wrapper">
+                                    <span class="help-text d-block mb-1" style="font-size: 0.75rem;">2. FILTER BY PANEL</span>
+                                    <select name="panel" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
+                                        <option value="" selected>All Panels</option>
+                                        {% for panel in panels %}
+                                        <option value="{{ panel.id }}">{{ panel.year }} - {{ panel.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Format Choice -->
+                                <div class="col-md-4 mb-3">
+                                    <span class="help-text d-block mb-1" style="font-size: 0.75rem;">3. SELECT FORMAT</span>
+                                    <select name="format" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
+                                        <option value="csv" selected>CSV (Spreadsheet)</option>
+                                        <option value="excel">Excel (XLSX)</option>
+                                        <option value="pdf">PDF (Branded Report)</option>
+                                        <option value="json">JSON (Data Object)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mt-2">
+                                <button type="submit" class="btn btn-outline-cyber btn-sm py-2">
+                                    <i class="bi bi-file-earmark-arrow-down me-2"></i>GENERATE & DOWNLOAD
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -130,7 +129,7 @@
                         <i class="bi bi-calendar-plus me-2"></i>DEPLOY NEW EVENT
                     </a>
                     <a href="/admin/VP/member/" class="btn btn-outline-cyber text-start">
-                        <i class="bi bi-people me-2"></i>MANAGE PERSONNEL
+                        <i class="bi bi-people me-2"></i>MANAGE PANEL MEMBERS
                     </a>
                 </div>
             </div>
@@ -170,53 +169,8 @@
     </div>
 </div>
 
-{{ chart_labels|json_script:"chart-labels-data" }}
-{{ chart_values|json_script:"chart-values-data" }}
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Safely retrieve data from json_script tags
-    const labels = JSON.parse(document.getElementById('chart-labels-data').textContent) || [];
-    const values = JSON.parse(document.getElementById('chart-values-data').textContent) || [];
-
-    const ctx = document.getElementById('growthChart').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(0, 243, 255, 0.4)');
-    gradient.addColorStop(1, 'rgba(0, 243, 255, 0)');
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Authorized Personnel',
-                data: values,
-                borderColor: '#00f3ff',
-                borderWidth: 3,
-                pointBackgroundColor: '#00f3ff',
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { 
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }, 
-                    ticks: { color: '#00f3ff' },
-                    beginAtZero: true 
-                },
-                x: { 
-                    grid: { display: false }, 
-                    ticks: { color: '#00f3ff' } 
-                }
-            }
-        }
-    });
-
     // Toggle Panel choice based on Resource selection in Data Extraction Suite
     const exportResource = document.getElementById('export-resource');
     const exportPanelWrapper = document.getElementById('export-panel-wrapper');

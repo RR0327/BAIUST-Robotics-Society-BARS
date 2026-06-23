@@ -220,6 +220,14 @@ class EventResult(models.Model):
 class EventRegistration(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_registrations")
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="registrations")
+    name = models.CharField(max_length=100, blank=True)
+    student_id = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    photo = models.ImageField(upload_to="registrations/photos/", null=True, blank=True)
+    payment_method = models.CharField(max_length=20, choices=[('bkash', 'bKash'), ('hand_cash', 'Hand Cash')], default='hand_cash')
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    hand_cash_recipient = models.CharField(max_length=100, null=True, blank=True)
     registered_at = models.DateTimeField(auto_now_add=True)
     qr_code = models.ImageField(upload_to="registrations/", blank=True, null=True)
 

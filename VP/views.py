@@ -418,19 +418,6 @@ def admin_dashboard(request):
     members = Member.objects.all()
     events = Event.objects.all()
 
-    # 1. Growth Chart Analytics (Last 6 Months)
-    six_months_ago = datetime.now() - timedelta(days=180)
-    growth_data = (
-        UserProfile.objects.filter(created_at__gte=six_months_ago)
-        .annotate(month=TruncMonth("created_at"))
-        .values("month")
-        .annotate(total=Count("id"))
-        .order_by("month")
-    )
-
-    chart_labels = [d["month"].strftime("%b %Y") for d in growth_data]
-    chart_values = [d["total"] for d in growth_data]
-
     # 2. Operational Awareness
     upcoming_schedule = events.filter(status="Upcoming").order_by("date")
 
@@ -442,8 +429,6 @@ def admin_dashboard(request):
         "active_panel": panels.first() if panels.exists() else None,
         "recent_registrations": members.order_by("-id")[:5],
         "upcoming_schedule": upcoming_schedule[:5],
-        "chart_labels": chart_labels,
-        "chart_values": chart_values,
     }
     return render(request, "VP/admin_dashboard.html", context)
 
@@ -957,6 +942,102 @@ def export_data(request):
         return HttpResponse("Invalid format specified", status=400)
 
 
+def generate_ticket_pdf(registration):
+    """Generates a custom PDF bytes representation of the registration ticket stub."""
+    from io import BytesIO
+    import os
+    
+    buffer = BytesIO()
+    
+    # Custom ticket shape page: 450x200 points
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=(450, 200),
+        leftMargin=15,
+        rightMargin=15,
+        topMargin=15,
+        bottomMargin=15
+    )
+    
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    style_event = ParagraphStyle(
+        "TicketEvent",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=12,
+        leading=14,
+        textColor=colors.HexColor("#001F3F")
+    )
+    style_label = ParagraphStyle(
+        "TicketLabel",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=7,
+        leading=9,
+        textColor=colors.HexColor("#666666")
+    )
+    style_value = ParagraphStyle(
+        "TicketValue",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=11,
+        textColor=colors.HexColor("#333333")
+    )
+    style_serial = ParagraphStyle(
+        "TicketSerial",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=10,
+        leading=12,
+        textColor=colors.HexColor("#FF6B00")
+    )
+    
+    left_flow = []
+    left_flow.append(Paragraph("<b>BAIUST ROBOTICS SOCIETY</b>", ParagraphStyle("Header", fontName="Helvetica-Bold", fontSize=8, leading=10, textColor=colors.HexColor("#FF6B00"))))
+    left_flow.append(Spacer(1, 4))
+    left_flow.append(Paragraph(registration.event.title, style_event))
+    left_flow.append(Spacer(1, 10))
+    
+    info_data = [
+        [Paragraph("ATTENDEE", style_label), Paragraph("PHONE NUMBER", style_label)],
+        [Paragraph(registration.name or registration.user.username, style_value), Paragraph(registration.phone or "N/A", style_value)],
+        [Paragraph("SERIAL NO", style_label), Paragraph("DATE & TIME", style_label)],
+        [Paragraph(f"#{registration.id}", style_serial), Paragraph(registration.event.date.strftime('%Y-%m-%d %H:%M'), style_value)]
+    ]
+    info_table = Table(info_data, colWidths=[140, 140])
+    info_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+    ]))
+    left_flow.append(info_table)
+    
+    qr_img = None
+    if registration.qr_code and os.path.exists(registration.qr_code.path):
+        try:
+            qr_img = Image(registration.qr_code.path, width=120, height=120)
+        except Exception:
+            pass
+            
+    layout_data = [[left_flow, qr_img or ""]]
+    layout_table = Table(layout_data, colWidths=[290, 130])
+    layout_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (1,0), (1,0), 'CENTER'),
+        ('LINEAFTER', (0,0), (0,0), 1, colors.HexColor("#00F3FF"), 0, (3,3)),
+    ]))
+    
+    story.append(layout_table)
+    doc.build(story)
+    
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
 @login_required
 @csrf_protect
 def register_event(request, event_id):
@@ -981,24 +1062,57 @@ def register_event(request, event_id):
         return redirect("event_detail", event_id=event_id)
         
     # Register the user
-    EventRegistration.objects.create(user=request.user, event=event)
+    name = request.POST.get("name", "").strip()
+    student_id = request.POST.get("student_id", "").strip()
+    email = request.POST.get("email", "").strip()
+    phone = request.POST.get("phone", "").strip()
+    payment_method = request.POST.get("payment_method", "hand_cash").strip()
+    transaction_id = request.POST.get("transaction_id", "").strip()
+    hand_cash_recipient = request.POST.get("hand_cash_recipient", "").strip()
+    photo = request.FILES.get("photo")
+
+    registration = EventRegistration.objects.create(
+        user=request.user,
+        event=event,
+        name=name,
+        student_id=student_id,
+        email=email,
+        phone=phone,
+        payment_method=payment_method,
+        transaction_id=transaction_id if payment_method == "bkash" else None,
+        hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
+        photo=photo
+    )
     
-    # Send confirmation email
+    registration.refresh_from_db()
+    
+    # Send confirmation email with attached PDF ticket
     subject = f"🎟 Your Event Ticket is Ready for {event.title}"
-    message = (
-        f"Hello {request.user.get_full_name() or request.user.username}\n\n"
-        f"You're registered for: {event.title}\n"
+    body = (
+        f"Hello {registration.name or request.user.get_full_name() or request.user.username},\n\n"
+        f"You are successfully registered for: {event.title}\n"
         f"Your digital ticket has been generated.\n\n"
+        f"Please find your digital ticket stub attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
         f"Thanks,\n"
         f"BAIUST Robotics Society"
     )
-    send_mail(
+    
+    from django.core.mail import EmailMessage
+    recipient_email = email if email else request.user.email
+    email_msg = EmailMessage(
         subject,
-        message,
+        body,
         settings.DEFAULT_FROM_EMAIL,
-        [request.user.email],
-        fail_silently=True,
+        [recipient_email],
     )
+    
+    try:
+        pdf_content = generate_ticket_pdf(registration)
+        email_msg.attach(f"Ticket_{registration.id}.pdf", pdf_content, "application/pdf")
+    except Exception as e:
+        print(f"Error generating PDF ticket attachment: {e}")
+        
+    email_msg.send(fail_silently=True)
 
     messages.success(request, "Your registration has been successfully.")
     return redirect("event_detail", event_id=event_id)
