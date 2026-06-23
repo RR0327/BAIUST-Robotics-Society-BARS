@@ -1,13 +1,14 @@
 import csv
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import login, authenticate, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Case, When, Value, IntegerField
 from django.db.models.functions import TruncMonth
 from django.core.mail import send_mail
 from django.conf import settings
@@ -25,6 +26,43 @@ from .models import Panel, Member, Advisor, Event, EventResult, Achievement, Use
 from .forms import RegistrationForm, UserUpdateForm, UserProfileForm, LoginForm
 
 # --- Helper Functions ---
+
+ROLE_ORDER_MAP = {
+    "President": 0,
+    "Vice President": 1,
+    "General Secretary": 2,
+    "Joint Secretary": 3,
+    "Treasurer": 4,
+    "Assistant Treasurer": 5,
+    "Organizing Secretary": 6,
+    "Assistant Organizing Secretary": 7,
+    "Media & Publication Secretary": 8,
+    "Assistant Media & Publication Secretary": 9,
+    "Executive Member": 10,
+    "Member": 11,
+    "General Member": 11,
+}
+
+
+def panel_year_sort_value(panel_year):
+    """Return a numeric sort key based on the leading year in a panel label."""
+    match = re.search(r"\d{4}", str(panel_year or ""))
+    return int(match.group()) if match else 0
+
+
+def ordered_members_for_export(queryset):
+    """Serialize members by their role order first, then by panel year descending, then by name."""
+    members = list(queryset.select_related("panel"))
+    members.sort(
+        key=lambda member: (
+            ROLE_ORDER_MAP.get(member.role, 99),
+            -panel_year_sort_value(member.panel.year if member.panel else ""),
+            member.panel.year if member.panel else "",
+            (member.name or "").lower(),
+            member.pk or 0,
+        )
+    )
+    return members
 
 
 def is_admin(user):
@@ -78,10 +116,14 @@ def panels_view(request):
 def panel_detail(request, panel_id):
     """Detailed view for a specific panel roster."""
     panel = get_object_or_404(Panel, id=panel_id)
+    role_order_cases = [When(role=role, then=Value(index)) for role, index in ROLE_ORDER_MAP.items()]
+    members = panel.members.all().annotate(
+        role_rank=Case(*role_order_cases, default=Value(99), output_field=IntegerField())
+    ).order_by("role_rank", "name")
     return render(
         request,
         "VP/panel_detail.html",
-        {"panel": panel, "members": panel.members.all().order_by("order")},
+        {"panel": panel, "members": members},
     )
 
 
@@ -213,7 +255,10 @@ def advisor_detail(request, advisor_id):
 
 def members_view(request):
     """Filterable directory of all society members."""
-    members = Member.objects.all().select_related("panel")
+    role_order_cases = [When(role=role, then=Value(index)) for role, index in ROLE_ORDER_MAP.items()]
+    members = Member.objects.all().select_related("panel").annotate(
+        role_rank=Case(*role_order_cases, default=Value(99), output_field=IntegerField())
+    ).order_by("role_rank", "-panel__year", "name")
     selected_panel = request.GET.get("panel", "all")
     selected_role = request.GET.get("role", "all")
 
@@ -414,7 +459,7 @@ def export_members_csv(request):
     writer = csv.writer(response)
     writer.writerow(["FULL NAME", "DESIGNATION", "PANEL YEAR", "CONTACT EMAIL"])
 
-    members = Member.objects.all().select_related("panel")
+    members = ordered_members_for_export(Member.objects.all())
     for m in members:
         writer.writerow([m.name, m.role, m.panel.year, m.email])
 
@@ -884,13 +929,19 @@ def export_data(request):
     """Unified API endpoint to export various society resources in different file formats."""
     resource = request.GET.get("resource", "members")
     fmt = request.GET.get("format", "csv")
+    panel_id = request.GET.get("panel")
     
     if resource == "members":
-        queryset = Member.objects.all().select_related("panel").order_by("order", "name")
+        queryset = Member.objects.all().select_related("panel")
+        if panel_id:
+            queryset = queryset.filter(panel_id=panel_id)
+        queryset = ordered_members_for_export(queryset)
     elif resource == "events":
         queryset = Event.objects.all().order_by("-date")
     elif resource == "registrations":
         queryset = UserProfile.objects.all().select_related("user", "panel").order_by("-created_at")
+        if panel_id:
+            queryset = queryset.filter(panel_id=panel_id)
     else:
         return HttpResponse("Invalid resource specified", status=400)
         

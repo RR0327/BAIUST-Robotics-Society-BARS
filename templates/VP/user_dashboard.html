@@ -4,7 +4,6 @@
 <div class="container py-5">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="glow-text">USER COMMAND PANEL</h1>
             <p class="text-cyan mb-0">
                 OPERATOR: {{ user.get_full_name|default:user.username|upper }} |
                 ACCESS LEVEL: {{ profile.get_user_type_display|upper }}
@@ -73,7 +72,7 @@
             </div>
         </div>
 
-        <div class="col-lg-7">
+        {% comment %} <div class="col-lg-7">
             <div class="cyber-card p-4 h-100">
                 <h4 class="text-orange mb-3"><i class="bi bi-lightning-charge me-2"></i>QUICK ACTIONS</h4>
                 <div class="row g-3">
@@ -105,40 +104,40 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> {% endcomment %}
 
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="cyber-card p-4 h-100 border-cyan">
                 <h4 class="text-cyan mb-3"><i class="bi bi-calendar2-week me-2"></i>UPCOMING OPERATIONS</h4>
                 {% if upcoming_events %}
-                    <div class="d-grid gap-3">
-                        {% for event in upcoming_events %}
-                        <div class="p-3 rounded bg-dark border border-secondary">
-                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                                <div>
-                                    <h6 class="text-white mb-1">
-                                        {{ event.title }}
-                                        {% if event.id in registered_event_ids %}
-                                            <span class="badge bg-success text-dark ms-2" style="font-size: 0.65rem;">
-                                                <i class="bi bi-check-circle-fill"></i> REGISTERED
-                                            </span>
-                                        {% endif %}
-                                    </h6>
-                                    <p class="mb-1 small text-cyan">
-                                        <i class="bi bi-calendar me-1"></i>{{ event.date|date:"M d, Y - h:i A" }}
-                                    </p>
-                                    <p class="mb-0 small text-light">
-                                        <i class="bi bi-geo-alt me-1 text-cyan"></i>{{ event.location }}
-                                    </p>
-                                </div>
-                                <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-outline-cyber">Details</a>
+                <div class="d-grid gap-3">
+                    {% for event in upcoming_events %}
+                    <div class="p-3 rounded bg-dark border border-secondary">
+                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div>
+                                <h6 class="text-white mb-1">
+                                    {{ event.title }}
+                                    {% if event.id in registered_event_ids %}
+                                    <span class="badge bg-success text-dark ms-2" style="font-size: 0.65rem;">
+                                        <i class="bi bi-check-circle-fill"></i> REGISTERED
+                                    </span>
+                                    {% endif %}
+                                </h6>
+                                <p class="mb-1 small text-cyan">
+                                    <i class="bi bi-calendar me-1"></i>{{ event.date|date:"M d, Y - h:i A" }}
+                                </p>
+                                <p class="mb-0 small text-light">
+                                    <i class="bi bi-geo-alt me-1 text-cyan"></i>{{ event.location }}
+                                </p>
                             </div>
+                            <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-outline-cyber">Details</a>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <p class="text-muted mb-0">No upcoming or ongoing events right now.</p>
+                <p class="text-muted mb-0">No upcoming or ongoing events right now.</p>
                 {% endif %}
             </div>
         </div>
@@ -147,17 +146,17 @@
             <div class="cyber-card p-4 h-100">
                 <h4 class="text-orange mb-3"><i class="bi bi-award me-2"></i>LATEST HIGHLIGHTS</h4>
                 {% if latest_achievements %}
-                    <div class="d-grid gap-3">
-                        {% for item in latest_achievements %}
-                        <div class="p-3 rounded bg-dark border border-secondary">
-                            <h6 class="text-white mb-1">{{ item.title }}</h6>
-                            <p class="small text-cyan mb-1">{{ item.get_category_display }}</p>
-                            <p class="small text-muted mb-0">{{ item.description|truncatewords:16 }}</p>
-                        </div>
-                        {% endfor %}
+                <div class="d-grid gap-3">
+                    {% for item in latest_achievements %}
+                    <div class="p-3 rounded bg-dark border border-secondary">
+                        <h6 class="text-white mb-1">{{ item.title }}</h6>
+                        <p class="small text-cyan mb-1">{{ item.get_category_display }}</p>
+                        <p class="small text-muted mb-0">{{ item.description|truncatewords:16 }}</p>
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <p class="text-muted mb-0">No achievements available yet.</p>
+                <p class="text-muted mb-0">No achievements available yet.</p>
                 {% endif %}
             </div>
         </div>
