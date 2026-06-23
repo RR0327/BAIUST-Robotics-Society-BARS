@@ -426,6 +426,7 @@ def admin_dashboard(request):
 
     context = {
         "panels": panels,
+        "events": events,
         "total_members": members.count(),
         "total_events": events.count(),
         "upcoming_ops": upcoming_schedule.count(),
@@ -603,6 +604,22 @@ def generate_csv_response(resource_name, queryset):
         writer.writerow(["USERNAME", "FULL NAME", "EMAIL", "USER TYPE", "STUDENT ID", "PHONE", "IS BARS MEMBER", "POSITION NAME", "CREATED AT"])
         for u in queryset:
             writer.writerow([u.user.username, u.user.get_full_name(), u.user.email, u.get_user_type_display(), u.student_id, u.phone, "Yes" if u.is_bars_member else "No", u.position_name or '', u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else ''])
+    elif resource_name == "event_registrations":
+        writer.writerow(["SERIAL NO", "EVENT", "ATTENDEE NAME", "STUDENT ID", "EMAIL", "PHONE", "PAYMENT METHOD", "TRANSACTION ID / RECIPIENT", "REGISTERED AT", "STATUS"])
+        for reg in queryset:
+            payment_info = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
+            writer.writerow([
+                reg.serial_no or '',
+                reg.event.title,
+                reg.name or reg.user.username,
+                reg.student_id or '',
+                reg.email or reg.user.email,
+                reg.phone or '',
+                reg.get_payment_method_display(),
+                payment_info or '',
+                reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else '',
+                reg.status
+            ])
             
     return response
 
@@ -644,6 +661,20 @@ def generate_json_response(resource_name, queryset):
                 "position_name": u.position_name or '',
                 "created_at": u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else ''
             })
+    elif resource_name == "event_registrations":
+        for reg in queryset:
+            data.append({
+                "serial_no": reg.serial_no,
+                "event": reg.event.title,
+                "attendee_name": reg.name or reg.user.username,
+                "student_id": reg.student_id,
+                "email": reg.email or reg.user.email,
+                "phone": reg.phone,
+                "payment_method": reg.get_payment_method_display(),
+                "payment_detail": reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient,
+                "registered_at": reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else '',
+                "status": reg.status
+            })
             
     response = HttpResponse(json.dumps(data, indent=4), content_type="application/json")
     filename = f"BARS_{resource_name}_{datetime.now().strftime('%Y-%m-%d')}.json"
@@ -669,25 +700,29 @@ def generate_excel_response(resource_name, queryset):
         bottom=XLSide(style='thin', color='CCCCCC')
     )
     
-    # Title Block
-    ws.append([f"BAIUST ROBOTICS SOCIETY - {resource_name.upper()} DATA EXPORT"])
-    ws.row_dimensions[1].height = 35
-    ws.merge_cells("A1:H1")
-    ws["A1"].font = font_title
-    ws["A1"].alignment = alignment_center
-    ws["A1"].fill = XLPatternFill(start_color="0D0D0D", end_color="0D0D0D", fill_type="solid")
-    
-    ws.append([]) # Spacer row
-    
     if resource_name == "members":
         headers = ["Full Name", "Role", "Department", "Panel Year", "Email", "Mobile Number", "LinkedIn", "GitHub"]
     elif resource_name == "events":
         headers = ["Title", "Date", "End Date", "Location", "Status", "Description"]
     elif resource_name == "registrations":
         headers = ["Username", "Full Name", "Email", "User Type", "Student ID", "Phone", "Is BARS Member", "Position Name", "Created At"]
+    elif resource_name == "event_registrations":
+        headers = ["Serial No", "Event", "Attendee Name", "Student ID", "Email", "Phone", "Payment Method", "Payment Detail", "Registered At", "Status"]
     else:
         headers = []
         
+    from openpyxl.utils import get_column_letter
+
+    # Title Block
+    ws.append([f"BAIUST ROBOTICS SOCIETY - {resource_name.upper()} DATA EXPORT"])
+    ws.row_dimensions[1].height = 35
+    last_col_letter = get_column_letter(max(len(headers), 1))
+    ws.merge_cells(f"A1:{last_col_letter}1")
+    ws["A1"].font = font_title
+    ws["A1"].alignment = alignment_center
+    ws["A1"].fill = XLPatternFill(start_color="0D0D0D", end_color="0D0D0D", fill_type="solid")
+    
+    ws.append([]) # Spacer row
     ws.append(headers)
     header_row_idx = 3
     ws.row_dimensions[header_row_idx].height = 25
@@ -713,6 +748,23 @@ def generate_excel_response(resource_name, queryset):
     elif resource_name == "registrations":
         for u in queryset:
             row_data = [u.user.username, u.user.get_full_name(), u.user.email, u.get_user_type_display(), u.student_id, u.phone, "Yes" if u.is_bars_member else "No", u.position_name or '', u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else '']
+            ws.append(row_data)
+            row_idx += 1
+    elif resource_name == "event_registrations":
+        for reg in queryset:
+            payment_info = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
+            row_data = [
+                reg.serial_no or '',
+                reg.event.title,
+                reg.name or reg.user.username,
+                reg.student_id or '',
+                reg.email or reg.user.email,
+                reg.phone or '',
+                reg.get_payment_method_display(),
+                payment_info or '',
+                reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else '',
+                reg.status
+            ]
             ws.append(row_data)
             row_idx += 1
             
@@ -888,6 +940,22 @@ def generate_pdf_response(resource_name, queryset):
                 Paragraph(u.phone, style_cell),
                 Paragraph("Yes" if u.is_bars_member else "No", style_cell),
             ])
+    elif resource_name == "event_registrations":
+        headers = ["Sl No", "Event", "Name", "Student ID", "Phone", "Payment", "Status"]
+        col_widths = [45, 110, 100, 60, 85, 80, 60]
+        table_data.append([Paragraph(h, style_header) for h in headers])
+        for reg in queryset:
+            payment_detail = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
+            payment_text = f"{reg.get_payment_method_display()}<br/><font size='6' color='#666666'>{payment_detail or ''}</font>"
+            table_data.append([
+                Paragraph(str(reg.serial_no or ''), style_cell_bold),
+                Paragraph(reg.event.title, style_cell),
+                Paragraph(reg.name or reg.user.username, style_cell),
+                Paragraph(reg.student_id or '', style_cell),
+                Paragraph(reg.phone or '', style_cell),
+                Paragraph(payment_text, style_cell),
+                Paragraph(reg.status, style_cell),
+            ])
             
     report_table = Table(table_data, colWidths=col_widths, repeatRows=1)
     ts = TableStyle([
@@ -919,6 +987,7 @@ def export_data(request):
     resource = request.GET.get("resource", "members")
     fmt = request.GET.get("format", "csv")
     panel_id = request.GET.get("panel")
+    event_id = request.GET.get("event")
     
     if resource == "members":
         queryset = Member.objects.all().select_related("panel")
@@ -931,6 +1000,10 @@ def export_data(request):
         queryset = UserProfile.objects.all().select_related("user", "panel").order_by("-created_at")
         if panel_id:
             queryset = queryset.filter(panel_id=panel_id)
+    elif resource == "event_registrations":
+        queryset = EventRegistration.objects.all().select_related("event", "user").order_by("-registered_at")
+        if event_id:
+            queryset = queryset.filter(event_id=event_id)
     else:
         return HttpResponse("Invalid resource specified", status=400)
         

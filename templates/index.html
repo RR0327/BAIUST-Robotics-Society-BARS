@@ -13,9 +13,21 @@
             Where Innovation Takes Wings
         </p>
         <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="{% url 'register' %}" class="btn btn-cyber btn-lg">
-                <i class="bi bi-person-plus me-2"></i>JOIN US
-            </a>
+            {% if user.is_authenticated %}
+                {% if user.is_superuser or user.is_staff or user.userprofile.user_type == 'admin' %}
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-cyber btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>DASHBOARD
+                    </a>
+                {% else %}
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-cyber btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>DASHBOARD
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-cyber btn-lg">
+                    <i class="bi bi-person-plus me-2"></i>JOIN US
+                </a>
+            {% endif %}
             <a href="{% url 'events' %}" class="btn btn-outline-cyber btn-lg">
                 <i class="bi bi-calendar-event me-2"></i>VIEW EVENTS
             </a>
