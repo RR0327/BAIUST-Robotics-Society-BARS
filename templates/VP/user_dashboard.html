@@ -72,6 +72,30 @@
             </div>
         </div>
 
+        {% if profile.position_name == "President" %}
+        <div class="col-lg-7">
+            <div class="cyber-card p-4 h-100 border-orange">
+                <h4 class="text-orange mb-3"><i class="bi bi-ui-checks-grid me-2"></i>MEMBER RECRUITMENT</h4>
+                <form method="POST" action="{% url 'update_recruitment' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <span class="help-text d-block mb-1" style="font-size: 0.75rem;">APPLICATION FORM URL</span>
+                        <input type="url" name="form_url" class="form-control bg-dark text-light border-cyan" style="font-size: 0.8rem;" value="{{ general_member_application.form_url|default:'' }}" placeholder="https://forms.gle/..." required>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input bg-dark border-cyan" type="checkbox" name="is_active" id="recruitment-active" {% if general_member_application.is_active %}checked{% endif %}>
+                        <label class="form-check-label text-white-50 small" for="recruitment-active">Recruitment Status (Active)</label>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-cyber btn-sm py-2">
+                            <i class="bi bi-save me-2"></i>UPDATE RECRUITMENT
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
         {% comment %} <div class="col-lg-7">
             <div class="cyber-card p-4 h-100">
                 <h4 class="text-orange mb-3"><i class="bi bi-lightning-charge me-2"></i>QUICK ACTIONS</h4>

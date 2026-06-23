@@ -25,6 +25,7 @@ urlpatterns = [
     path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
     path("export-members/", views.export_members_csv, name="export_members_csv"),
     path("export-data/", views.export_data, name="export_data"),
+    path("update-recruitment/", views.update_recruitment, name="update_recruitment"),
     path("about/", views.about_view, name="about"),
     path("achievements/", views.achievements_view, name="achievements"),
     path("developers/", views.developers_view, name="developers"),

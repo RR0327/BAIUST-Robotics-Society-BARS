@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core import mail
 from django.utils import timezone
-from VP.models import Event, EventRegistration
+from VP.models import Event, EventRegistration, UserProfile, GeneralMemberApplication
 
 class EventRegistrationEmailTest(TestCase):
     def setUp(self):
@@ -33,7 +33,17 @@ class EventRegistrationEmailTest(TestCase):
         self.assertEqual(len(mail.outbox), 0)
         
         # Post to the registration URL
-        response = self.client.post(self.url)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_image = SimpleUploadedFile(name='test_photo.jpg', content=b'dummy_image_data', content_type='image/jpeg')
+        response = self.client.post(self.url, {
+            "name": "Test User",
+            "student_id": "CSE-12345",
+            "email": "testuser@example.com",
+            "phone": "01700000000",
+            "payment_method": "hand_cash",
+            "hand_cash_recipient": "Shaikat",
+            "photo": test_image
+        })
         
         # Assert redirect to event detail
         self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
@@ -83,7 +93,7 @@ class EventRegistrationEmailTest(TestCase):
             "Hello Test User,\n\n"
             "Your registration for 'Robotics Workshop' has been APPROVED!\n"
             "Your digital ticket has been generated.\n\n"
-            "Please find your digital ticket stub attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
+            "Please find your digital ticket attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
             "Thanks,\n"
             "BAIUST Robotics Society"
         )
@@ -97,6 +107,8 @@ class EventRegistrationEmailTest(TestCase):
         
         # Clean up the generated QR Code file
         registration.qr_code.delete(save=False)
+        if registration.photo:
+            registration.photo.delete(save=False)
 
     def test_registration_with_custom_fields(self):
         self.client.login(username="testuser", password="testpassword123")
@@ -339,5 +351,233 @@ class EventRegistrationApprovalTest(TestCase):
         self.assertEqual(reg.status, 'Rejected')
         self.assertIsNone(reg.serial_no)
         self.assertFalse(bool(reg.qr_code))
+
+
+class HomePageHeroButtonsTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.admin = User.objects.create_superuser(username="adminuser", password="password")
+
+    def test_anonymous_user_sees_join_us_and_not_dashboard(self):
+        response = self.client.get(reverse("index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "JOIN US")
+        self.assertNotContains(response, "DASHBOARD")
+
+    def test_logged_in_user_sees_dashboard_and_not_join_us(self):
+        self.client.login(username="testuser", password="password")
+        response = self.client.get(reverse("index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "DASHBOARD")
+        self.assertNotContains(response, "JOIN US")
+
+
+class EventRegistrationExportTest(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username="adminuser", password="password")
+        self.event1 = Event.objects.create(
+            title="AI Expo",
+            description="AI technologies.",
+            date=timezone.now() + timezone.timedelta(days=2),
+            location="Auditorium",
+            status="Upcoming"
+        )
+        self.event2 = Event.objects.create(
+            title="Robo Combat",
+            description="Robot fighting.",
+            date=timezone.now() + timezone.timedelta(days=3),
+            location="Arena",
+            status="Upcoming"
+        )
+        self.user1 = User.objects.create_user(username="attendee1", password="password")
+        self.user2 = User.objects.create_user(username="attendee2", password="password")
+        
+        self.reg1 = EventRegistration.objects.create(
+            user=self.user1,
+            event=self.event1,
+            name="Attendee One",
+            student_id="CSE-01",
+            email="attendee1@example.com",
+            phone="01700000001",
+            status="Approved"
+        )
+        self.reg2 = EventRegistration.objects.create(
+            user=self.user2,
+            event=self.event2,
+            name="Attendee Two",
+            student_id="CE-02",
+            email="attendee2@example.com",
+            phone="01700000002",
+            status="Pending"
+        )
+        self.export_url = reverse("export_data")
+
+    def tearDown(self):
+        if self.reg1.qr_code:
+            self.reg1.qr_code.delete(save=False)
+        if self.reg2.qr_code:
+            self.reg2.qr_code.delete(save=False)
+
+    def test_export_unauthorized(self):
+        # Anonymous user should be redirected to login
+        response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "csv"})
+        self.assertEqual(response.status_code, 302)
+
+    def test_export_csv(self):
+        self.client.login(username="adminuser", password="password")
+        response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "csv"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        content = response.content.decode('utf-8')
+        self.assertIn("Attendee One", content)
+        self.assertIn("Attendee Two", content)
+        self.assertIn("AI Expo", content)
+        self.assertIn("Robo Combat", content)
+
+    def test_export_csv_filtered(self):
+        self.client.login(username="adminuser", password="password")
+        response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "csv", "event": self.event1.id})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn("Attendee One", content)
+        self.assertNotIn("Attendee Two", content)
+
+    def test_export_json(self):
+        self.client.login(username="adminuser", password="password")
+        response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        content = response.content.decode('utf-8')
+        self.assertIn("Attendee One", content)
+        self.assertIn("Attendee Two", content)
+
+    def test_export_excel(self):
+        self.client.login(username="adminuser", password="password")
+        response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "excel"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    def test_export_pdf(self):
+        self.client.login(username="adminuser", password="password")
+        response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "pdf"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+
+class RecruitmentManagementTest(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username="adminuser", password="password")
+        self.president_user = User.objects.create_user(username="president", password="password")
+        self.president_profile = UserProfile.objects.create(
+            user=self.president_user,
+            user_type="member",
+            position_name="President"
+        )
+        self.normal_user = User.objects.create_user(username="normaluser", password="password")
+        self.normal_profile = UserProfile.objects.create(
+            user=self.normal_user,
+            user_type="student",
+            position_name="General Member"
+        )
+        self.url = reverse("update_recruitment")
+
+    def test_unauthorized_user_cannot_update(self):
+        # Anonymous user
+        response = self.client.post(self.url, {"form_url": "https://forms.gle/test", "is_active": "on"})
+        self.assertEqual(response.status_code, 302)
+
+        # Logged in normal student user
+        self.client.login(username="normaluser", password="password")
+        response = self.client.post(self.url, {"form_url": "https://forms.gle/test", "is_active": "on"})
+        self.assertEqual(response.status_code, 302)
+
+    def test_admin_can_update(self):
+        self.client.login(username="adminuser", password="password")
+        response = self.client.post(self.url, {"form_url": "https://forms.gle/testadmin", "is_active": "on"})
+        self.assertRedirects(response, reverse("admin_dashboard"))
+        
+        app = GeneralMemberApplication.objects.first()
+        self.assertIsNotNone(app)
+        self.assertEqual(app.form_url, "https://forms.gle/testadmin")
+        self.assertTrue(app.is_active)
+
+    def test_club_president_can_update(self):
+        self.client.login(username="president", password="password")
+        response = self.client.post(self.url, {"form_url": "https://forms.gle/testpresident"})
+        self.assertRedirects(response, reverse("user_dashboard"))
+        
+        app = GeneralMemberApplication.objects.first()
+        self.assertIsNotNone(app)
+        self.assertEqual(app.form_url, "https://forms.gle/testpresident")
+        self.assertFalse(app.is_active)
+
+
+class EventRegistrationValidationTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.event = Event.objects.create(
+            title="AI Workshop",
+            description="Testing validations.",
+            date=timezone.now() + timezone.timedelta(days=2),
+            location="Room A",
+            status="Upcoming"
+        )
+        self.url = reverse("register_event", args=[self.event.id])
+
+    def test_missing_required_fields_shows_error(self):
+        self.client.login(username="testuser", password="password")
+        # Missing name
+        response = self.client.post(self.url, {
+            "name": "",
+            "student_id": "CSE-1",
+            "email": "test@example.com",
+            "phone": "017",
+            "payment_method": "hand_cash"
+        })
+        self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
+        # Check messages
+        from django.contrib.messages import get_messages
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn("Registration failed: Name, Student ID, Email, and Phone are required fields.", messages)
+
+    def test_missing_bkash_transaction_id_shows_error(self):
+        self.client.login(username="testuser", password="password")
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_image = SimpleUploadedFile(name='test_photo.jpg', content=b'dummy_image_data', content_type='image/jpeg')
+        response = self.client.post(self.url, {
+            "name": "Test User",
+            "student_id": "CSE-1",
+            "email": "test@example.com",
+            "phone": "017",
+            "payment_method": "bkash",
+            "transaction_id": "",
+            "photo": test_image
+        })
+        self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
+        from django.contrib.messages import get_messages
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn("Registration failed: Transaction ID is required for bKash payments.", messages)
+
+    def test_missing_hand_cash_recipient_shows_error(self):
+        self.client.login(username="testuser", password="password")
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_image = SimpleUploadedFile(name='test_photo.jpg', content=b'dummy_image_data', content_type='image/jpeg')
+        response = self.client.post(self.url, {
+            "name": "Test User",
+            "student_id": "CSE-1",
+            "email": "test@example.com",
+            "phone": "017",
+            "payment_method": "hand_cash",
+            "hand_cash_recipient": "",
+            "photo": test_image
+        })
+        self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
+        from django.contrib.messages import get_messages
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn("Registration failed: Hand cash recipient is required.", messages)
+
+
+
+
 
 

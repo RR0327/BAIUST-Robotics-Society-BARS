@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Q, Count, Case, When, Value, IntegerField
 from django.db.models.functions import TruncMonth
+from django.db import IntegrityError
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_protect
@@ -22,7 +23,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-from .models import Panel, Member, Advisor, Event, EventResult, Achievement, UserProfile, EventRegistration
+from .models import Panel, Member, Advisor, Event, EventResult, Achievement, UserProfile, EventRegistration, GeneralMemberApplication
 from .forms import RegistrationForm, UserUpdateForm, UserProfileForm, LoginForm
 
 # --- Helper Functions ---
@@ -76,6 +77,19 @@ def is_admin(user):
 
     try:
         return user.userprofile.user_type == "admin"
+    except UserProfile.DoesNotExist:
+        return False
+
+
+def is_admin_or_president(user):
+    """Helper to check if the user is admin or club president."""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser or user.is_staff:
+        return True
+    try:
+        profile = user.userprofile
+        return profile.user_type == "admin" or profile.position_name == "President"
     except UserProfile.DoesNotExist:
         return False
 
@@ -308,7 +322,7 @@ def register_view(request):
                 is_bars_member=is_bars_member,
                 position_name=position_name if is_bars_member else None,
             )
-            login(request, user)
+            login(request, user, backend='VP.backends.EmailOrUsernameBackend')
             messages.success(request, "Registration successful! Welcome to BARS.")
             return redirect("admin_dashboard" if is_admin(user) else "user_dashboard")
     else:
@@ -1186,36 +1200,61 @@ def register_event(request, event_id):
     hand_cash_recipient = request.POST.get("hand_cash_recipient", "").strip()
     photo = request.FILES.get("photo")
 
-    if existing_registration and existing_registration.status == 'Rejected':
-        # Re-submit: update the existing record
-        existing_registration.name = name
-        existing_registration.student_id = student_id
-        existing_registration.email = email
-        existing_registration.phone = phone
-        existing_registration.payment_method = payment_method
-        existing_registration.transaction_id = transaction_id if payment_method == "bkash" else None
-        existing_registration.hand_cash_recipient = hand_cash_recipient if payment_method == "hand_cash" else None
-        if photo:
-            existing_registration.photo = photo
-        existing_registration.status = 'Pending'
-        existing_registration.save()
-        messages.success(request, "Your registration has been re-submitted successfully and is pending approval.")
-    else:
-        # Create new registration (starts as Pending)
-        registration = EventRegistration.objects.create(
-            user=request.user,
-            event=event,
-            name=name,
-            student_id=student_id,
-            email=email,
-            phone=phone,
-            payment_method=payment_method,
-            transaction_id=transaction_id if payment_method == "bkash" else None,
-            hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
-            photo=photo,
-            status='Pending'
-        )
-        messages.success(request, "Your registration was submitted successfully and is pending approval.")
+    # View-side Validations
+    if not name or not student_id or not email or not phone:
+        messages.error(request, "Registration failed: Name, Student ID, Email, and Phone are required fields.")
+        return redirect("event_detail", event_id=event_id)
+
+    if payment_method == "bkash" and not transaction_id:
+        messages.error(request, "Registration failed: Transaction ID is required for bKash payments.")
+        return redirect("event_detail", event_id=event_id)
+
+    if payment_method == "hand_cash" and not hand_cash_recipient:
+        messages.error(request, "Registration failed: Hand cash recipient is required.")
+        return redirect("event_detail", event_id=event_id)
+
+    # For new registrations, photo is required. For re-submissions, photo is optional.
+    is_resubmission = existing_registration and existing_registration.status == 'Rejected'
+    if not photo and not is_resubmission:
+        messages.error(request, "Registration failed: Profile photo is required.")
+        return redirect("event_detail", event_id=event_id)
+
+    try:
+        if is_resubmission:
+            # Re-submit: update the existing record
+            existing_registration.name = name
+            existing_registration.student_id = student_id
+            existing_registration.email = email
+            existing_registration.phone = phone
+            existing_registration.payment_method = payment_method
+            existing_registration.transaction_id = transaction_id if payment_method == "bkash" else None
+            existing_registration.hand_cash_recipient = hand_cash_recipient if payment_method == "hand_cash" else None
+            if photo:
+                existing_registration.photo = photo
+            existing_registration.status = 'Pending'
+            existing_registration.save()
+            messages.success(request, "Your registration has been re-submitted successfully and is pending approval.")
+        else:
+            # Create new registration (starts as Pending)
+            registration = EventRegistration.objects.create(
+                user=request.user,
+                event=event,
+                name=name,
+                student_id=student_id,
+                email=email,
+                phone=phone,
+                payment_method=payment_method,
+                transaction_id=transaction_id if payment_method == "bkash" else None,
+                hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
+                photo=photo,
+                status='Pending'
+            )
+            messages.success(request, "Your registration was submitted successfully and is pending approval.")
+    except IntegrityError:
+        messages.error(request, "Registration failed: You are already registered for this event.")
+    except Exception as e:
+        messages.error(request, f"Registration failed due to a system error: {str(e)}")
+        print(f"Error during event registration: {e}")
         
     return redirect("event_detail", event_id=event_id)
 
@@ -1299,4 +1338,32 @@ def reject_registration(request, registration_id):
         messages.info(request, f"Registration is already rejected.")
         
     return redirect("admin_dashboard")
+
+
+@login_required
+@user_passes_test(is_admin_or_president)
+def update_recruitment(request):
+    """Updates the general member application link and active status."""
+    if request.method == "POST":
+        form_url = request.POST.get("form_url", "").strip()
+        is_active = request.POST.get("is_active") == "on"
+        
+        application = GeneralMemberApplication.objects.first()
+        if not application:
+            application = GeneralMemberApplication.objects.create(
+                title="JOIN AS GENERAL MEMBER",
+                form_url=form_url,
+                is_active=is_active
+            )
+        else:
+            application.form_url = form_url
+            application.is_active = is_active
+            application.save()
+            
+        status_str = "ACTIVE" if is_active else "INACTIVE"
+        messages.success(request, f"General member recruitment updated successfully! Status: {status_str}")
+        
+    if is_admin(request.user):
+        return redirect("admin_dashboard")
+    return redirect("user_dashboard")
 
