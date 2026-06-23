@@ -149,3 +149,9 @@ DEFAULT_FROM_EMAIL = config(
 
 # Optional: If you want to see errors in the console during testing
 # EMAIL_DEBUG = True
+
+AUTHENTICATION_BACKENDS = [
+    "VP.backends.EmailOrUsernameBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+

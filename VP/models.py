@@ -218,6 +218,12 @@ class EventResult(models.Model):
 
 
 class EventRegistration(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_registrations")
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="registrations")
     name = models.CharField(max_length=100, blank=True)
@@ -230,6 +236,8 @@ class EventRegistration(models.Model):
     hand_cash_recipient = models.CharField(max_length=100, null=True, blank=True)
     registered_at = models.DateTimeField(auto_now_add=True)
     qr_code = models.ImageField(upload_to="registrations/", blank=True, null=True)
+    serial_no = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
 
     class Meta:
         unique_together = ('user', 'event')
@@ -243,7 +251,7 @@ class EventRegistration(models.Model):
         from io import BytesIO
         from django.core.files import File
         
-        qr_content = f"Registration ID: {self.id} | User: {self.user.username} | Event: {self.event.title}"
+        qr_content = f"Registration ID: {self.id} | Serial No: {self.serial_no} | User: {self.user.username} | Event: {self.event.title}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(qr_content)
         qr.make(fit=True)
@@ -257,9 +265,32 @@ class EventRegistration(models.Model):
         EventRegistration.objects.filter(pk=self.pk).update(qr_code=self.qr_code.name)
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        is_approved = self.status == 'Approved'
+        was_approved = False
+        if self.pk:
+            try:
+                orig = EventRegistration.objects.get(pk=self.pk)
+                was_approved = orig.status == 'Approved'
+            except EventRegistration.DoesNotExist:
+                pass
+            
+        if is_approved:
+            if not was_approved or not self.serial_no:
+                max_serial = EventRegistration.objects.filter(event=self.event, status='Approved').aggregate(
+                    max_serial=models.Max('serial_no')
+                )['max_serial']
+                self.serial_no = (max_serial or 0) + 1
+        else:
+            self.serial_no = None
+            if self.qr_code:
+                try:
+                    self.qr_code.delete(save=False)
+                except Exception:
+                    pass
+                self.qr_code = None
+                
         super().save(*args, **kwargs)
-        if is_new:
+        if is_approved and not self.qr_code:
             self.generate_qr_code()
 
 

@@ -270,8 +270,8 @@ class GeneralMemberApplicationAdmin(admin.ModelAdmin):
 
 
 class EventRegistrationAdmin(admin.ModelAdmin):
-    list_display = ["user", "event", "registered_at"]
-    list_filter = ["event", "registered_at"]
+    list_display = ["serial_no", "user", "event", "status", "registered_at"]
+    list_filter = ["status", "event", "registered_at"]
     search_fields = ["user__username", "user__email", "event__title"]
     ordering = ["-registered_at"]
 

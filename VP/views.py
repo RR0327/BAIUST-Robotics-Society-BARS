@@ -189,11 +189,14 @@ def event_detail(request, event_id):
     if request.user.is_authenticated:
         registration = EventRegistration.objects.filter(user=request.user, event=event).first()
         if registration:
-            is_registered = True
-            # Retrofit QR code on load if it's missing (e.g. for existing registrations)
-            if not registration.qr_code:
-                registration.generate_qr_code()
-                registration.refresh_from_db()
+            if registration.status == 'Rejected':
+                is_registered = False
+            else:
+                is_registered = True
+                # Retrofit QR code on load if it's missing (e.g. for existing registrations)
+                if registration.status == 'Approved' and not registration.qr_code:
+                    registration.generate_qr_code()
+                    registration.refresh_from_db()
 
     context = {
         "event": event,
@@ -429,6 +432,7 @@ def admin_dashboard(request):
         "active_panel": panels.first() if panels.exists() else None,
         "recent_registrations": members.order_by("-id")[:5],
         "upcoming_schedule": upcoming_schedule[:5],
+        "event_registrations": EventRegistration.objects.all().order_by("-registered_at"),
     }
     return render(request, "VP/admin_dashboard.html", context)
 
@@ -953,23 +957,23 @@ def generate_ticket_pdf(registration):
     doc = SimpleDocTemplate(
         buffer,
         pagesize=(450, 200),
-        leftMargin=15,
-        rightMargin=15,
-        topMargin=15,
-        bottomMargin=15
+        leftMargin=20,
+        rightMargin=20,
+        topMargin=20,
+        bottomMargin=20
     )
     
     story = []
     styles = getSampleStyleSheet()
     
-    # Custom styles
+    # Custom styles to match the cyber website theme
     style_event = ParagraphStyle(
         "TicketEvent",
         parent=styles["Normal"],
         fontName="Helvetica-Bold",
         fontSize=12,
         leading=14,
-        textColor=colors.HexColor("#001F3F")
+        textColor=colors.HexColor("#FFFFFF")
     )
     style_label = ParagraphStyle(
         "TicketLabel",
@@ -977,7 +981,7 @@ def generate_ticket_pdf(registration):
         fontName="Helvetica",
         fontSize=7,
         leading=9,
-        textColor=colors.HexColor("#666666")
+        textColor=colors.HexColor("#8892B0")
     )
     style_value = ParagraphStyle(
         "TicketValue",
@@ -985,7 +989,7 @@ def generate_ticket_pdf(registration):
         fontName="Helvetica-Bold",
         fontSize=9,
         leading=11,
-        textColor=colors.HexColor("#333333")
+        textColor=colors.HexColor("#FFFFFF")
     )
     style_serial = ParagraphStyle(
         "TicketSerial",
@@ -993,11 +997,11 @@ def generate_ticket_pdf(registration):
         fontName="Helvetica-Bold",
         fontSize=10,
         leading=12,
-        textColor=colors.HexColor("#FF6B00")
+        textColor=colors.HexColor("#00F3FF")
     )
     
     left_flow = []
-    left_flow.append(Paragraph("<b>BAIUST ROBOTICS SOCIETY</b>", ParagraphStyle("Header", fontName="Helvetica-Bold", fontSize=8, leading=10, textColor=colors.HexColor("#FF6B00"))))
+    left_flow.append(Paragraph("<b>TICKET</b>", ParagraphStyle("Header", fontName="Helvetica-Bold", fontSize=8, leading=10, textColor=colors.HexColor("#00F3FF"))))
     left_flow.append(Spacer(1, 4))
     left_flow.append(Paragraph(registration.event.title, style_event))
     left_flow.append(Spacer(1, 10))
@@ -1006,9 +1010,9 @@ def generate_ticket_pdf(registration):
         [Paragraph("ATTENDEE", style_label), Paragraph("PHONE NUMBER", style_label)],
         [Paragraph(registration.name or registration.user.username, style_value), Paragraph(registration.phone or "N/A", style_value)],
         [Paragraph("SERIAL NO", style_label), Paragraph("DATE & TIME", style_label)],
-        [Paragraph(f"#{registration.id}", style_serial), Paragraph(registration.event.date.strftime('%Y-%m-%d %H:%M'), style_value)]
+        [Paragraph(f"#{registration.serial_no}", style_serial), Paragraph(registration.event.date.strftime('%Y-%m-%d %H:%M'), style_value)]
     ]
-    info_table = Table(info_data, colWidths=[140, 140])
+    info_table = Table(info_data, colWidths=[130, 130])
     info_table.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
@@ -1019,20 +1023,54 @@ def generate_ticket_pdf(registration):
     qr_img = None
     if registration.qr_code and os.path.exists(registration.qr_code.path):
         try:
-            qr_img = Image(registration.qr_code.path, width=120, height=120)
+            # Scale down the image slightly so it fits beautifully in the right column
+            qr_img = Image(registration.qr_code.path, width=100, height=100)
         except Exception:
             pass
             
     layout_data = [[left_flow, qr_img or ""]]
-    layout_table = Table(layout_data, colWidths=[290, 130])
+    layout_table = Table(layout_data, colWidths=[270, 130])
     layout_table.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ALIGN', (1,0), (1,0), 'CENTER'),
+        # Dashed line separator between left details and QR code
         ('LINEAFTER', (0,0), (0,0), 1, colors.HexColor("#00F3FF"), 0, (3,3)),
     ]))
     
     story.append(layout_table)
-    doc.build(story)
+    
+    # Callback to draw cyber-themed dark background and dashed outer border
+    def draw_cyber_background(canvas, doc):
+        canvas.saveState()
+        # Cyber dark background: #0A0E17
+        canvas.setFillColor(colors.HexColor("#0A0E17"))
+        canvas.rect(0, 0, 450, 200, fill=1, stroke=0)
+        
+        # Cyber cyan dashed border
+        canvas.setStrokeColor(colors.HexColor("#00F3FF"))
+        canvas.setLineWidth(1)
+        canvas.setDash([4, 4])
+        canvas.rect(10, 10, 430, 180, fill=0, stroke=1)
+        
+        # Tiny corner accents
+        canvas.setLineWidth(1.5)
+        canvas.setDash([]) # Reset to solid line
+        # Top-left accent
+        canvas.line(8, 192, 18, 192)
+        canvas.line(8, 192, 8, 182)
+        # Top-right accent
+        canvas.line(442, 192, 432, 192)
+        canvas.line(442, 192, 442, 182)
+        # Bottom-left accent
+        canvas.line(8, 8, 18, 8)
+        canvas.line(8, 8, 8, 18)
+        # Bottom-right accent
+        canvas.line(442, 8, 432, 8)
+        canvas.line(442, 8, 442, 18)
+        
+        canvas.restoreState()
+        
+    doc.build(story, onFirstPage=draw_cyber_background)
     
     buffer.seek(0)
     return buffer.getvalue()
@@ -1056,10 +1094,14 @@ def register_event(request, event_id):
         return redirect("event_detail", event_id=event_id)
         
     # Check if already registered
-    already_registered = EventRegistration.objects.filter(user=request.user, event=event).exists()
-    if already_registered:
-        messages.warning(request, "You are already registered for this event.")
-        return redirect("event_detail", event_id=event_id)
+    existing_registration = EventRegistration.objects.filter(user=request.user, event=event).first()
+    if existing_registration:
+        if existing_registration.status == 'Pending':
+            messages.warning(request, "Your registration is pending approval.")
+            return redirect("event_detail", event_id=event_id)
+        elif existing_registration.status == 'Approved':
+            messages.warning(request, "You are already registered for this event.")
+            return redirect("event_detail", event_id=event_id)
         
     # Register the user
     name = request.POST.get("name", "").strip()
@@ -1071,48 +1113,117 @@ def register_event(request, event_id):
     hand_cash_recipient = request.POST.get("hand_cash_recipient", "").strip()
     photo = request.FILES.get("photo")
 
-    registration = EventRegistration.objects.create(
-        user=request.user,
-        event=event,
-        name=name,
-        student_id=student_id,
-        email=email,
-        phone=phone,
-        payment_method=payment_method,
-        transaction_id=transaction_id if payment_method == "bkash" else None,
-        hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
-        photo=photo
-    )
+    if existing_registration and existing_registration.status == 'Rejected':
+        # Re-submit: update the existing record
+        existing_registration.name = name
+        existing_registration.student_id = student_id
+        existing_registration.email = email
+        existing_registration.phone = phone
+        existing_registration.payment_method = payment_method
+        existing_registration.transaction_id = transaction_id if payment_method == "bkash" else None
+        existing_registration.hand_cash_recipient = hand_cash_recipient if payment_method == "hand_cash" else None
+        if photo:
+            existing_registration.photo = photo
+        existing_registration.status = 'Pending'
+        existing_registration.save()
+        messages.success(request, "Your registration has been re-submitted successfully and is pending approval.")
+    else:
+        # Create new registration (starts as Pending)
+        registration = EventRegistration.objects.create(
+            user=request.user,
+            event=event,
+            name=name,
+            student_id=student_id,
+            email=email,
+            phone=phone,
+            payment_method=payment_method,
+            transaction_id=transaction_id if payment_method == "bkash" else None,
+            hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
+            photo=photo,
+            status='Pending'
+        )
+        messages.success(request, "Your registration was submitted successfully and is pending approval.")
+        
+    return redirect("event_detail", event_id=event_id)
+
+
+@login_required
+def download_ticket_pdf(request, registration_id):
+    """Generates and downloads the registration ticket stub as a PDF."""
+    registration = get_object_or_404(EventRegistration, id=registration_id)
     
-    registration.refresh_from_db()
-    
-    # Send confirmation email with attached PDF ticket
-    subject = f"🎟 Your Event Ticket is Ready for {event.title}"
-    body = (
-        f"Hello {registration.name or request.user.get_full_name() or request.user.username},\n\n"
-        f"You are successfully registered for: {event.title}\n"
-        f"Your digital ticket has been generated.\n\n"
-        f"Please find your digital ticket stub attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
-        f"Thanks,\n"
-        f"BAIUST Robotics Society"
-    )
-    
-    from django.core.mail import EmailMessage
-    recipient_email = email if email else request.user.email
-    email_msg = EmailMessage(
-        subject,
-        body,
-        settings.DEFAULT_FROM_EMAIL,
-        [recipient_email],
-    )
-    
+    # Restrict access to ticket owner or admin
+    if registration.user != request.user and not is_admin(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("You do not have permission to download this ticket.")
+        
     try:
         pdf_content = generate_ticket_pdf(registration)
-        email_msg.attach(f"Ticket_{registration.id}.pdf", pdf_content, "application/pdf")
+        response = HttpResponse(pdf_content, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="Ticket_{registration.id}.pdf"'
+        return response
     except Exception as e:
-        print(f"Error generating PDF ticket attachment: {e}")
-        
-    email_msg.send(fail_silently=True)
+        messages.error(request, f"Error generating PDF ticket: {e}")
+        return redirect("event_detail", event_id=registration.event.id)
 
-    messages.success(request, "Your registration has been successfully.")
-    return redirect("event_detail", event_id=event_id)
+
+@login_required
+@user_passes_test(is_admin)
+def approve_registration(request, registration_id):
+    """Approves a pending registration and generates its ticket."""
+    registration = get_object_or_404(EventRegistration, id=registration_id)
+    if registration.status != 'Approved':
+        registration.status = 'Approved'
+        registration.save() # This generates serial_no and qr_code
+        
+        # Refresh to get QR code name, etc.
+        registration.refresh_from_db()
+        
+        # Send confirmation email with attached PDF ticket
+        subject = f"🎟 Your Event Ticket is Ready for {registration.event.title}"
+        body = (
+            f"Hello {registration.name or registration.user.get_full_name() or registration.user.username},\n\n"
+            f"Your registration for '{registration.event.title}' has been APPROVED!\n"
+            f"Your digital ticket has been generated.\n\n"
+            f"Please find your digital ticket attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
+            f"Thanks,\n"
+            f"BAIUST Robotics Society"
+        )
+        
+        from django.core.mail import EmailMessage
+        recipient_email = registration.email if registration.email else registration.user.email
+        email_msg = EmailMessage(
+            subject,
+            body,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+        )
+        
+        try:
+            pdf_content = generate_ticket_pdf(registration)
+            email_msg.attach(f"Ticket_{registration.id}.pdf", pdf_content, "application/pdf")
+        except Exception as e:
+            print(f"Error generating PDF ticket attachment: {e}")
+            
+        email_msg.send(fail_silently=True)
+        messages.success(request, f"Registration for {registration.name or registration.user.username} has been approved and ticket has been emailed.")
+    else:
+        messages.info(request, f"Registration is already approved.")
+        
+    return redirect("admin_dashboard")
+
+
+@login_required
+@user_passes_test(is_admin)
+def reject_registration(request, registration_id):
+    """Rejects a registration."""
+    registration = get_object_or_404(EventRegistration, id=registration_id)
+    if registration.status != 'Rejected':
+        registration.status = 'Rejected'
+        registration.save() # This clears serial_no and qr_code
+        messages.warning(request, f"Registration for {registration.name or registration.user.username} has been rejected.")
+    else:
+        messages.info(request, f"Registration is already rejected.")
+        
+    return redirect("admin_dashboard")
+

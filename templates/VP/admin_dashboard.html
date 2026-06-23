@@ -155,11 +155,91 @@
                             <tr>
                                 <td class="text-white fw-bold">{{ member.name }}</td>
                                 <td><span class="badge bg-dark border border-cyan text-cyan" style="font-size: 0.7rem;">{{ member.role }}</span></td>
-                                <td class="text-muted small">{{ member.panel.year }}</td>
+                                <td class="text-white-50 small">{{ member.panel.year }}</td>
                                 <td class="text-success small">AUTHORIZED</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="text-center text-muted py-4">No recent personnel records found.</td></tr>
+                            <tr><td colspan="4" class="text-center text-white-50 py-4">No recent personnel records found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Registrations Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="cyber-card p-4 border-orange">
+                <h4 class="text-orange mb-4 border-bottom border-secondary pb-2">
+                    <i class="bi bi-ticket-perforated me-2"></i>EVENT REGISTRATIONS MANAGER
+                </h4>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0 align-middle text-nowrap">
+                        <thead>
+                            <tr class="text-cyan small">
+                                <th>SL</th>
+                                <th>EVENT</th>
+                                <th>ATTENDEE</th>
+                                <th>CONTACT</th>
+                                <th>PAYMENT INFO</th>
+                                <th>DATE</th>
+                                <th>STATUS</th>
+                                <th class="text-end">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in event_registrations %}
+                            <tr>
+                                <td>
+                                    {% if reg.serial_no %}
+                                        <span class="text-cyan fw-bold">#{{ reg.serial_no }}</span>
+                                    {% else %}
+                                        <span class="text-white-50">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-white fw-bold">{{ reg.event.title }}</td>
+                                <td>
+                                    <div class="text-light">{{ reg.name|default:reg.user.username }}</div>
+                                    <small class="help-text">ID: {{ reg.student_id|default:"N/A" }}</small>
+                                </td>
+                                <td>
+                                    <div class="small text-white-50">{{ reg.email }}</div>
+                                    <div class="small text-white-50">{{ reg.phone }}</div>
+                                </td>
+                                <td>
+                                    {% if reg.payment_method == 'bkash' %}
+                                        <span class="badge bg-danger text-white">bKash</span>
+                                        <small class="d-block text-white-50" style="font-size: 0.7rem;">TxID: {{ reg.transaction_id }}</small>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-light">Hand Cash</span>
+                                        <small class="d-block text-white-50" style="font-size: 0.7rem;">Recipient: {{ reg.hand_cash_recipient }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-white-50 small">{{ reg.registered_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    {% if reg.status == 'Approved' %}
+                                        <span class="badge bg-success text-dark">Approved</span>
+                                    {% elif reg.status == 'Rejected' %}
+                                        <span class="badge bg-danger text-white">Rejected</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        {% if reg.status == 'Pending' %}
+                                            <a href="{% url 'approve_registration' reg.id %}" class="btn btn-sm btn-cyber" style="font-size: 0.7rem;">Approve</a>
+                                            <a href="{% url 'reject_registration' reg.id %}" class="btn btn-sm btn-outline-cyber border-danger text-danger" style="font-size: 0.7rem;">Reject</a>
+                                        {% elif reg.status == 'Approved' %}
+                                            <a href="{% url 'reject_registration' reg.id %}" class="btn btn-sm btn-outline-cyber border-danger text-danger" style="font-size: 0.7rem;">Reject</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="8" class="text-center text-white-50 py-4">No event registration records found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
