@@ -305,7 +305,7 @@ def register_view(request):
         return redirect("admin_dashboard" if is_admin(request.user) else "index")
 
     if request.method == "POST":
-        form = RegistrationForm(request.POST)
+        form = RegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
             is_bars_member = form.cleaned_data.get("is_bars_member", "yes") == "yes"
@@ -321,6 +321,7 @@ def register_view(request):
                 phone=form.cleaned_data.get("phone", ""),
                 is_bars_member=is_bars_member,
                 position_name=position_name if is_bars_member else None,
+                photo=form.cleaned_data.get("photo"),
             )
             login(request, user, backend='VP.backends.EmailOrUsernameBackend')
             messages.success(request, "Registration successful! Welcome to BARS.")
@@ -1174,7 +1175,10 @@ def register_event(request, event_id):
     
     # Check if registration is open
     if not event.is_registration_open:
-        if event.capacity is not None and event.registration_count >= event.capacity:
+        from django.utils import timezone
+        if event.status != "Upcoming" or timezone.now() >= event.date:
+            messages.error(request, "Registration is closed because this event is already running or completed.")
+        elif event.capacity is not None and event.registration_count >= event.capacity:
             messages.error(request, "Registration failed: This event is already full.")
         else:
             messages.error(request, "Registration is closed for this event.")

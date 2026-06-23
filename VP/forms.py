@@ -98,7 +98,7 @@ class RegistrationForm(UserCreationForm):
 
     position_name = forms.ChoiceField(
         choices=POSITION_CHOICES,
-        required=True,
+        required=False,
         widget=forms.Select(
             attrs={
                 "class": "form-select bg-dark text-light border-cyan",
@@ -108,6 +108,19 @@ class RegistrationForm(UserCreationForm):
         ),
         initial="",
         label="Position Name",
+    )
+
+    photo = forms.ImageField(
+        required=True,
+        widget=forms.FileInput(
+            attrs={
+                "class": "form-control bg-dark text-light border-cyan",
+                "accept": "image/*",
+                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+            }
+        ),
+        label="Profile Photo / Student ID Card Photo",
+        help_text="Please upload a clear profile photo or a copy/scan of your Student ID card.",
     )
 
     class Meta:
@@ -121,6 +134,7 @@ class RegistrationForm(UserCreationForm):
             "phone",
             "is_bars_member",
             "position_name",
+            "photo",
         ]
         widgets = {
             "username": forms.TextInput(

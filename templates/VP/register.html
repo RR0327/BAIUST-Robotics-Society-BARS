@@ -10,7 +10,7 @@
                     <p class="text-cyan">Create your BARS terminal account</p>
                 </div>
                 
-                <form method="POST" class="cyber-form">
+                <form method="POST" enctype="multipart/form-data" class="cyber-form">
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
@@ -27,7 +27,7 @@
                     <div class="row g-3">
                         {% for field in form %}
                             {% if field.name != 'password1' and field.name != 'password2' %}
-                               <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' %}col-12{% else %}col-md-6{% endif %}" 
+                               <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' or field.name == 'photo' %}col-12{% else %}col-md-6{% endif %}" 
                                  {% if field.name == 'student_id' %}id="student-id-field"{% endif %}
                                  {% if field.name == 'position_name' %}id="position-name-field"{% endif %}
                                  {% if field.name == 'is_bars_member' %}id="bars-member-field"{% endif %}>

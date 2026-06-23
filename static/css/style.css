@@ -767,3 +767,35 @@ a.text-decoration-none:hover h3 {
     color: var(--primary-cyan) !important;
     transition: 0.3s ease;
 }
+
+/* Style file inputs to have the button offset from the borders */
+.form-control[type="file"]::file-selector-button {
+    margin: 5px 12px 5px 5px !important;
+    border-radius: 4px !important;
+    padding: 4px 12px !important;
+    border: none !important;
+    background-color: var(--primary-cyan) !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+}
+.form-control[type="file"]::file-selector-button:hover {
+    background-color: #ffffff !important;
+    box-shadow: 0 0 10px var(--primary-cyan) !important;
+}
+.form-control[type="file"]::-webkit-file-upload-button {
+    margin: 5px 12px 5px 5px !important;
+    border-radius: 4px !important;
+    padding: 4px 12px !important;
+    border: none !important;
+    background-color: var(--primary-cyan) !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+}
+.form-control[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #ffffff !important;
+    box-shadow: 0 0 10px var(--primary-cyan) !important;
+}

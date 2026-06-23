@@ -156,6 +156,8 @@ class Event(models.Model):
         from django.utils import timezone
         if self.status != "Upcoming":
             return False
+        if timezone.now() >= self.date:
+            return False
         if self.registration_deadline and timezone.now() > self.registration_deadline:
             return False
         if self.capacity is not None and self.registration_count >= self.capacity:
@@ -386,6 +388,7 @@ class UserProfile(models.Model):
         blank=True,
         null=True,
     )
+    photo = models.ImageField(upload_to="users/photos/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

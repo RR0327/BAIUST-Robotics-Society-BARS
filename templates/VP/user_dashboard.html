@@ -46,12 +46,26 @@
         <div class="col-lg-5">
             <div class="cyber-card p-4 h-100 border-cyan">
                 <h4 class="text-cyan mb-3"><i class="bi bi-person-badge me-2"></i>PROFILE SNAPSHOT</h4>
-                <div class="small text-light">
-                    <p class="mb-2"><span class="text-cyan">Username:</span> {{ user.username }}</p>
-                    <p class="mb-2"><span class="text-cyan">Name:</span> {{ user.get_full_name|default:'Not set' }}</p>
-                    <p class="mb-2"><span class="text-cyan">Email:</span> {{ user.email|default:'Not set' }}</p>
-                    <p class="mb-2"><span class="text-cyan">Student ID:</span> {{ profile.student_id|default:'Not set' }}</p>
-                    <p class="mb-0"><span class="text-cyan">Phone:</span> {{ profile.phone|default:'Not set' }}</p>
+                <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
+                    {% if profile.photo %}
+                        <div class="flex-shrink-0">
+                            <img src="{{ profile.photo.url }}" alt="{{ user.username }}" 
+                                 class="rounded border border-cyan" 
+                                 style="width: 100px; height: 100px; object-fit: cover; box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);">
+                        </div>
+                    {% else %}
+                        <div class="flex-shrink-0 bg-dark border border-secondary rounded d-flex align-items-center justify-content-center" 
+                             style="width: 100px; height: 100px; background-color: #050505 !important;">
+                            <i class="bi bi-person text-muted" style="font-size: 2.5rem;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="small text-light flex-grow-1">
+                        <p class="mb-2"><span class="text-cyan">Username:</span> {{ user.username }}</p>
+                        <p class="mb-2"><span class="text-cyan">Name:</span> {{ user.get_full_name|default:'Not set' }}</p>
+                        <p class="mb-2"><span class="text-cyan">Email:</span> {{ user.email|default:'Not set' }}</p>
+                        <p class="mb-2"><span class="text-cyan">Student ID:</span> {{ profile.student_id|default:'Not set' }}</p>
+                        <p class="mb-0"><span class="text-cyan">Phone:</span> {{ profile.phone|default:'Not set' }}</p>
+                    </div>
                 </div>
                 <div class="mt-3">
                     <a href="{% url 'user_profile' %}" class="btn btn-sm btn-cyber">
@@ -175,7 +189,7 @@
                     <div class="p-3 rounded bg-dark border border-secondary">
                         <h6 class="text-white mb-1">{{ item.title }}</h6>
                         <p class="small text-cyan mb-1">{{ item.get_category_display }}</p>
-                        <p class="small text-muted mb-0">{{ item.description|truncatewords:16 }}</p>
+                        <p class="small text-white-50 mb-0">{{ item.description|truncatewords:16 }}</p>
                     </div>
                     {% endfor %}
                 </div>

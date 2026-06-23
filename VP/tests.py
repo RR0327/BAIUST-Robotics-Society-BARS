@@ -576,6 +576,121 @@ class EventRegistrationValidationTest(TestCase):
         messages = [m.message for m in get_messages(response.wsgi_request)]
         self.assertIn("Registration failed: Hand cash recipient is required.", messages)
 
+    def test_register_for_ongoing_event_fails(self):
+        self.client.login(username="testuser", password="password")
+        self.event.status = "Ongoing"
+        self.event.save()
+        
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_image = SimpleUploadedFile(name='test_photo.jpg', content=b'dummy_image_data', content_type='image/jpeg')
+        response = self.client.post(self.url, {
+            "name": "Test User",
+            "student_id": "CSE-1",
+            "email": "test@example.com",
+            "phone": "017",
+            "payment_method": "hand_cash",
+            "hand_cash_recipient": "Shaikat",
+            "photo": test_image
+        })
+        self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
+        from django.contrib.messages import get_messages
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn("Registration is closed because this event is already running or completed.", messages)
+
+    def test_register_for_completed_event_fails(self):
+        self.client.login(username="testuser", password="password")
+        self.event.status = "Completed"
+        self.event.save()
+        
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_image = SimpleUploadedFile(name='test_photo.jpg', content=b'dummy_image_data', content_type='image/jpeg')
+        response = self.client.post(self.url, {
+            "name": "Test User",
+            "student_id": "CSE-1",
+            "email": "test@example.com",
+            "phone": "017",
+            "payment_method": "hand_cash",
+            "hand_cash_recipient": "Shaikat",
+            "photo": test_image
+        })
+        self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
+        from django.contrib.messages import get_messages
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn("Registration is closed because this event is already running or completed.", messages)
+
+    def test_register_for_past_event_fails(self):
+        self.client.login(username="testuser", password="password")
+        # Event date is in the past
+        self.event.date = timezone.now() - timezone.timedelta(days=1)
+        self.event.save()
+        
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_image = SimpleUploadedFile(name='test_photo.jpg', content=b'dummy_image_data', content_type='image/jpeg')
+        response = self.client.post(self.url, {
+            "name": "Test User",
+            "student_id": "CSE-1",
+            "email": "test@example.com",
+            "phone": "017",
+            "payment_method": "hand_cash",
+            "hand_cash_recipient": "Shaikat",
+            "photo": test_image
+        })
+        self.assertRedirects(response, reverse("event_detail", args=[self.event.id]))
+        from django.contrib.messages import get_messages
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn("Registration is closed because this event is already running or completed.", messages)
+
+
+class UserRegistrationTest(TestCase):
+    def setUp(self):
+        self.url = reverse("register")
+
+    def test_registration_without_photo_fails(self):
+        response = self.client.post(self.url, {
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "user_type": "student",
+            "student_id": "CSE-1234",
+            "phone": "01712345678",
+            "is_bars_member": "no",
+            "password1": "testpass12345",
+            "password2": "testpass12345"
+        })
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn("photo", form.errors)
+        self.assertEqual(form.errors['photo'], ["This field is required."])
+
+    def test_registration_with_photo_succeeds(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        test_image = SimpleUploadedFile(name='test_user_photo.gif', content=small_gif, content_type='image/gif')
+        response = self.client.post(self.url, {
+            "username": "newuser2",
+            "email": "newuser2@example.com",
+            "user_type": "student",
+            "student_id": "CSE-5678",
+            "phone": "01712345679",
+            "is_bars_member": "no",
+            "password1": "testpass12345",
+            "password2": "testpass12345",
+            "photo": test_image
+        })
+        if response.status_code == 200:
+            print("FORM ERRORS:", response.context['form'].errors)
+        self.assertRedirects(response, reverse("user_dashboard"))
+        user = User.objects.get(username="newuser2")
+        profile = user.userprofile
+        self.assertTrue(bool(profile.photo))
+        
+        # Clean up files
+        if profile.photo:
+            profile.photo.delete(save=False)
+
 
 
 
