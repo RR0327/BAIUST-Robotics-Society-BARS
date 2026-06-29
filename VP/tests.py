@@ -51,32 +51,18 @@ class EventRegistrationEmailTest(TestCase):
         # Check that the success message is present in the redirect response
         from django.contrib.messages import get_messages
         messages = [m.message for m in get_messages(response.wsgi_request)]
-        self.assertIn("Your registration was submitted successfully and is pending approval.", messages)
+        self.assertIn("Your registration was successful! Your digital ticket has been sent to your email.", messages)
         
         # Follow the redirect and verify context
         redirect_response = self.client.get(reverse("event_detail", args=[self.event.id]))
         self.assertTrue(redirect_response.context['is_registered'])
-        self.assertEqual(redirect_response.context['registration'].status, 'Pending')
+        self.assertEqual(redirect_response.context['registration'].status, 'Approved')
         
-        # Assert registration created but no QR code / email yet
+        # Assert registration created, and QR code / email sent immediately
         self.assertEqual(EventRegistration.objects.count(), 1)
         registration = EventRegistration.objects.first()
         self.assertEqual(registration.user, self.user)
         self.assertEqual(registration.event, self.event)
-        self.assertIsNone(registration.serial_no)
-        self.assertFalse(bool(registration.qr_code))
-        self.assertEqual(len(mail.outbox), 0)
-        
-        # Now, simulate admin approval to trigger email & ticket generation
-        admin_user = User.objects.create_superuser(username="adminuser2", email="admin2@example.com", password="password")
-        self.client.login(username="adminuser2", password="password")
-        approve_url = reverse("approve_registration", args=[registration.id])
-        approve_response = self.client.get(approve_url)
-        self.assertEqual(approve_response.status_code, 302)
-        
-        # Reload registration
-        registration.refresh_from_db()
-        self.assertEqual(registration.status, 'Approved')
         self.assertEqual(registration.serial_no, 1)
         self.assertTrue(bool(registration.qr_code))
         
@@ -324,7 +310,7 @@ class EventRegistrationApprovalTest(TestCase):
 
     def test_approval_workflow(self):
         # Create a new registration
-        reg = EventRegistration.objects.create(user=self.user, event=self.event)
+        reg = EventRegistration.objects.create(user=self.user, event=self.event, status='Pending')
         self.assertEqual(reg.status, 'Pending')
         self.assertIsNone(reg.serial_no)
         self.assertFalse(bool(reg.qr_code))
@@ -460,6 +446,40 @@ class EventRegistrationExportTest(TestCase):
     def test_export_pdf(self):
         self.client.login(username="adminuser", password="password")
         response = self.client.get(self.export_url, {"resource": "event_registrations", "format": "pdf"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_export_members_all_formats(self):
+        self.client.login(username="adminuser", password="password")
+        from VP.models import Panel, Member
+        panel = Panel.objects.create(name="8th Panel", year="2024-2025")
+        member = Member.objects.create(name="Test Member", role="Vice President", department="cse", panel=panel, email="member@example.com")
+        
+        # Test CSV
+        response = self.client.get(self.export_url, {"resource": "members", "format": "csv"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        content = response.content.decode('utf-8')
+        self.assertIn("PANEL", content)
+        self.assertIn("PANEL SESSION", content)
+        self.assertIn("8th Panel", content)
+        self.assertIn("2024-2025", content)
+        
+        # Test JSON
+        response = self.client.get(self.export_url, {"resource": "members", "format": "json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        content = response.content.decode('utf-8')
+        self.assertIn('"panel": "8th Panel"', content)
+        self.assertIn('"panel_session": "2024-2025"', content)
+        
+        # Test Excel
+        response = self.client.get(self.export_url, {"resource": "members", "format": "excel"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        
+        # Test PDF
+        response = self.client.get(self.export_url, {"resource": "members", "format": "pdf"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 

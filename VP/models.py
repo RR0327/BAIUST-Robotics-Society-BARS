@@ -239,7 +239,7 @@ class EventRegistration(models.Model):
     registered_at = models.DateTimeField(auto_now_add=True)
     qr_code = models.ImageField(upload_to="registrations/", blank=True, null=True)
     serial_no = models.PositiveIntegerField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Approved')
 
     class Meta:
         unique_together = ('user', 'event')
@@ -253,6 +253,13 @@ class EventRegistration(models.Model):
         from io import BytesIO
         from django.core.files import File
         
+        # Clean up any existing QR code file to prevent filename suffixes/duplicates on regenerate
+        if self.qr_code:
+            try:
+                self.qr_code.delete(save=False)
+            except Exception:
+                pass
+
         qr_content = f"Registration ID: {self.id} | Serial No: {self.serial_no} | User: {self.user.username} | Event: {self.event.title}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(qr_content)

@@ -125,6 +125,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Use a temporary directory for MEDIA_ROOT when running tests to avoid cluttering local media
+import sys
+if 'test' in sys.argv:
+    import tempfile
+    MEDIA_ROOT = os.path.join(tempfile.gettempdir(), 'bars_test_media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

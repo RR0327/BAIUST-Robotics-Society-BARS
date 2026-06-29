@@ -462,11 +462,11 @@ def export_members_csv(request):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow(["FULL NAME", "DESIGNATION", "PANEL YEAR", "CONTACT EMAIL"])
+    writer.writerow(["FULL NAME", "DESIGNATION", "PANEL", "PANEL SESSION", "CONTACT EMAIL"])
 
     members = ordered_members_for_export(Member.objects.all())
     for m in members:
-        writer.writerow([m.name, m.role, m.panel.year, m.email])
+        writer.writerow([m.name, m.role, m.panel.name if m.panel else '', m.panel.year if m.panel else '', m.email])
 
     return response
 
@@ -608,9 +608,9 @@ def generate_csv_response(resource_name, queryset):
     
     writer = csv.writer(response)
     if resource_name == "members":
-        writer.writerow(["FULL NAME", "ROLE", "DEPARTMENT", "PANEL YEAR", "EMAIL", "MOBILE NUMBER", "LINKEDIN", "GITHUB"])
+        writer.writerow(["FULL NAME", "ROLE", "DEPARTMENT", "PANEL", "PANEL SESSION", "EMAIL", "MOBILE NUMBER", "LINKEDIN", "GITHUB"])
         for m in queryset:
-            writer.writerow([m.name, m.role, m.get_department_display(), m.panel.year if m.panel else '', m.email, m.mobile_number or '', m.linkedin, m.github])
+            writer.writerow([m.name, m.role, m.get_department_display(), m.panel.name if m.panel else '', m.panel.year if m.panel else '', m.email, m.mobile_number or '', m.linkedin, m.github])
     elif resource_name == "events":
         writer.writerow(["TITLE", "DATE", "END DATE", "LOCATION", "STATUS", "DESCRIPTION"])
         for e in queryset:
@@ -647,7 +647,8 @@ def generate_json_response(resource_name, queryset):
                 "name": m.name,
                 "role": m.role,
                 "department": m.get_department_display(),
-                "panel_year": m.panel.year if m.panel else '',
+                "panel": m.panel.name if m.panel else '',
+                "panel_session": m.panel.year if m.panel else '',
                 "email": m.email,
                 "mobile_number": m.mobile_number or '',
                 "linkedin": m.linkedin,
@@ -716,7 +717,7 @@ def generate_excel_response(resource_name, queryset):
     )
     
     if resource_name == "members":
-        headers = ["Full Name", "Role", "Department", "Panel Year", "Email", "Mobile Number", "LinkedIn", "GitHub"]
+        headers = ["Full Name", "Role", "Department", "Panel", "Panel Session", "Email", "Mobile Number", "LinkedIn", "GitHub"]
     elif resource_name == "events":
         headers = ["Title", "Date", "End Date", "Location", "Status", "Description"]
     elif resource_name == "registrations":
@@ -752,7 +753,7 @@ def generate_excel_response(resource_name, queryset):
     row_idx = 4
     if resource_name == "members":
         for m in queryset:
-            row_data = [m.name, m.role, m.get_department_display(), m.panel.year if m.panel else '', m.email, m.mobile_number or '', m.linkedin, m.github]
+            row_data = [m.name, m.role, m.get_department_display(), m.panel.name if m.panel else '', m.panel.year if m.panel else '', m.email, m.mobile_number or '', m.linkedin, m.github]
             ws.append(row_data)
             row_idx += 1
     elif resource_name == "events":
@@ -864,6 +865,12 @@ def generate_pdf_response(resource_name, queryset):
         fontName="Helvetica-Bold",
         textColor=colors.HexColor("#001F3F")
     )
+    style_email = ParagraphStyle(
+        "EmailText",
+        parent=style_cell,
+        fontSize=7,
+        leading=9
+    )
     style_header = ParagraphStyle(
         "TableHeaderText",
         parent=styles["Normal"],
@@ -912,16 +919,17 @@ def generate_pdf_response(resource_name, queryset):
     
     table_data = []
     if resource_name == "members":
-        headers = ["Full Name", "Role / Designation", "Dept", "Panel", "Email", "Mobile"]
-        col_widths = [110, 110, 50, 50, 130, 90]
+        headers = ["Full Name", "Role / Designation", "Dept", "Panel", "Panel Session", "Email", "Mobile"]
+        col_widths = [90, 90, 30, 65, 55, 150, 60]
         table_data.append([Paragraph(h, style_header) for h in headers])
         for m in queryset:
             table_data.append([
                 Paragraph(m.name, style_cell_bold),
                 Paragraph(m.role, style_cell),
-                Paragraph(m.get_department_display(), style_cell),
+                Paragraph(m.department, style_cell),
+                Paragraph(m.panel.name if m.panel else '', style_cell),
                 Paragraph(m.panel.year if m.panel else '', style_cell),
-                Paragraph(m.email, style_cell),
+                Paragraph(m.email, style_email),
                 Paragraph(m.mobile_number or '', style_cell),
             ])
             
@@ -1164,6 +1172,36 @@ def generate_ticket_pdf(registration):
     return buffer.getvalue()
 
 
+def send_ticket_email(registration):
+    """Generates the PDF ticket and sends it as an attachment to the attendee."""
+    subject = f"🎟 Your Event Ticket is Ready for {registration.event.title}"
+    body = (
+        f"Hello {registration.name or registration.user.get_full_name() or registration.user.username},\n\n"
+        f"Your registration for '{registration.event.title}' has been APPROVED!\n"
+        f"Your digital ticket has been generated.\n\n"
+        f"Please find your digital ticket attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
+        f"Thanks,\n"
+        f"BAIUST Robotics Society"
+    )
+    
+    from django.core.mail import EmailMessage
+    recipient_email = registration.email if registration.email else registration.user.email
+    email_msg = EmailMessage(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [recipient_email],
+    )
+    
+    try:
+        pdf_content = generate_ticket_pdf(registration)
+        email_msg.attach(f"Ticket_{registration.id}.pdf", pdf_content, "application/pdf")
+    except Exception as e:
+        print(f"Error generating PDF ticket attachment: {e}")
+        
+    email_msg.send(fail_silently=True)
+
+
 @login_required
 @csrf_protect
 def register_event(request, event_id):
@@ -1235,11 +1273,13 @@ def register_event(request, event_id):
             existing_registration.hand_cash_recipient = hand_cash_recipient if payment_method == "hand_cash" else None
             if photo:
                 existing_registration.photo = photo
-            existing_registration.status = 'Pending'
+            existing_registration.status = 'Approved'
             existing_registration.save()
-            messages.success(request, "Your registration has been re-submitted successfully and is pending approval.")
+            existing_registration.refresh_from_db()
+            send_ticket_email(existing_registration)
+            messages.success(request, "Your registration has been re-submitted and approved! Your digital ticket has been sent to your email.")
         else:
-            # Create new registration (starts as Pending)
+            # Create new registration (starts as Approved)
             registration = EventRegistration.objects.create(
                 user=request.user,
                 event=event,
@@ -1251,9 +1291,11 @@ def register_event(request, event_id):
                 transaction_id=transaction_id if payment_method == "bkash" else None,
                 hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
                 photo=photo,
-                status='Pending'
+                status='Approved'
             )
-            messages.success(request, "Your registration was submitted successfully and is pending approval.")
+            registration.refresh_from_db()
+            send_ticket_email(registration)
+            messages.success(request, "Your registration was successful! Your digital ticket has been sent to your email.")
     except IntegrityError:
         messages.error(request, "Registration failed: You are already registered for this event.")
     except Exception as e:
@@ -1296,32 +1338,7 @@ def approve_registration(request, registration_id):
         registration.refresh_from_db()
         
         # Send confirmation email with attached PDF ticket
-        subject = f"🎟 Your Event Ticket is Ready for {registration.event.title}"
-        body = (
-            f"Hello {registration.name or registration.user.get_full_name() or registration.user.username},\n\n"
-            f"Your registration for '{registration.event.title}' has been APPROVED!\n"
-            f"Your digital ticket has been generated.\n\n"
-            f"Please find your digital ticket attached as a PDF to this email. Present this ticket at the event entrance.\n\n"
-            f"Thanks,\n"
-            f"BAIUST Robotics Society"
-        )
-        
-        from django.core.mail import EmailMessage
-        recipient_email = registration.email if registration.email else registration.user.email
-        email_msg = EmailMessage(
-            subject,
-            body,
-            settings.DEFAULT_FROM_EMAIL,
-            [recipient_email],
-        )
-        
-        try:
-            pdf_content = generate_ticket_pdf(registration)
-            email_msg.attach(f"Ticket_{registration.id}.pdf", pdf_content, "application/pdf")
-        except Exception as e:
-            print(f"Error generating PDF ticket attachment: {e}")
-            
-        email_msg.send(fail_silently=True)
+        send_ticket_email(registration)
         messages.success(request, f"Registration for {registration.name or registration.user.username} has been approved and ticket has been emailed.")
     else:
         messages.info(request, f"Registration is already approved.")
