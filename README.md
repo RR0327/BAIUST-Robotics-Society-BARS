@@ -14,9 +14,18 @@ This is a Django web application for BARS with:
 ## 2. Current Python Dependencies
 
 Dependencies are managed from `requirements.txt`:
-- Django==4.2.0
+- asgiref==3.11.1
+- charset-normalizer==3.4.7
+- colorama==0.4.6
+- Django==4.2
+- et_xmlfile==2.0.0
+- openpyxl==3.1.5
 - Pillow==10.0.0
 - python-decouple==3.8
+- qrcode==8.2
+- reportlab==4.5.1
+- sqlparse==0.5.5
+- tzdata==2026.1
 
 Install them with:
 
