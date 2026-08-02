@@ -15,39 +15,110 @@
                     </a>
                 </div>
 
-                <form method="post" class="cyber-form">
+                <form method="post" enctype="multipart/form-data" class="cyber-form">
                     {% csrf_token %}
 
                     <div class="row g-4">
                         <div class="col-lg-6">
                             <h5 class="text-cyan mb-3"><i class="bi bi-person-circle me-2"></i>Account Details</h5>
                             {% for field in form %}
-                                <div class="mb-3">
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                        <small class="form-text">{{ field.help_text }}</small>
-                                    {% endif %}
-                                    {% for error in field.errors %}
-                                        <div class="text-danger small mt-1">{{ error }}</div>
-                                    {% endfor %}
-                                </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                <small class="form-text">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                             {% endfor %}
+                            
+                            {% with field=profile_form.student_id_photo %}
+                            <div class="mb-3">
+                                <label class="form-label text-orange" for="{{ field.id_for_label }}"><i class="bi bi-person-vcard me-2"></i>{{ field.label }}</label>
+                                <div class="mb-2">
+                                    {% if profile_form.instance.student_id_photo %}
+                                    <div class="mb-2 text-center">
+                                        <img src="{{ profile_form.instance.student_id_photo.url }}" alt="Current ID Photo"
+                                            class="img-fluid rounded border border-orange"
+                                            style="max-height: 250px; background-color: #1a1e23; box-shadow: 0 0 15px rgba(255,165,0,0.3);">
+                                    </div>
+                                    {% endif %}
+                                    <div class="input-group">
+                                        <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                                            class="d-none" accept="image/*"
+                                            onchange="document.getElementById('photo-filename-{{ field.id_for_label }}').textContent = this.files.length > 0 ? this.files[0].name : 'No file chosen'">
+                                        <button type="button" class="btn btn-outline-orange"
+                                            onclick="document.getElementById('{{ field.id_for_label }}').click()"><i
+                                                class="bi bi-upload me-2"></i>Choose File</button>
+                                        <span
+                                            class="input-group-text bg-dark text-orange border-orange flex-grow-1 text-start"
+                                            id="photo-filename-{{ field.id_for_label }}"
+                                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            {% if profile_form.instance.student_id_photo %}
+                                            {{ request.user.first_name }}_student_id
+                                            {% else %}
+                                            No file chosen
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endwith %}
                         </div>
 
                         <div class="col-lg-6">
                             <h5 class="text-orange mb-3"><i class="bi bi-shield-check me-2"></i>BARS Profile</h5>
                             {% for field in profile_form %}
-                                <div class="mb-3">
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                        <small class="form-text">{{ field.help_text }}</small>
+                            {% if field.name != 'student_id_photo' %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {% if field.name == 'photo' %}
+                                <div class="mb-2">
+                                    {% if profile_form.instance.photo %}
+                                    <div class="mb-2">
+                                        <img src="{{ profile_form.instance.photo.url }}" alt="Current Photo"
+                                            class="img-thumbnail rounded"
+                                            style="max-height: 120px; border-color: var(--primary-cyan); background-color: #1a1e23;">
+                                    </div>
                                     {% endif %}
-                                    {% for error in field.errors %}
-                                        <div class="text-danger small mt-1">{{ error }}</div>
-                                    {% endfor %}
+                                    <div class="input-group">
+                                        <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                                            class="d-none" accept="image/*"
+                                            onchange="document.getElementById('photo-filename-{{ field.id_for_label }}').textContent = this.files.length > 0 ? this.files[0].name : 'No file chosen'">
+                                        <button type="button" class="btn btn-cyber"
+                                            onclick="document.getElementById('{{ field.id_for_label }}').click()"><i
+                                                class="bi bi-upload me-2"></i>Choose File</button>
+                                        <span
+                                            class="input-group-text bg-dark text-cyan border-cyan flex-grow-1 text-start"
+                                            id="photo-filename-{{ field.id_for_label }}"
+                                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            {% if profile_form.instance.photo %}
+                                            {{ request.user.first_name }}_profile_photo
+                                            {% else %}
+                                            No file chosen
+                                            {% endif %}
+                                        </span>
+                                    </div>
                                 </div>
+                                {% else %}
+                                {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                <small class="form-text">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                             {% endfor %}
                         </div>
                     </div>

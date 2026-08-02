@@ -119,8 +119,21 @@ class RegistrationForm(UserCreationForm):
                 "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
             }
         ),
-        label="Profile Photo / Student ID Card Photo",
-        help_text="Please upload a clear profile photo or a copy/scan of your Student ID card.",
+        label="Profile Photo",
+        help_text="Please upload a clear profile photo.",
+    )
+
+    student_id_photo = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(
+            attrs={
+                "class": "form-control bg-dark text-light border-cyan",
+                "accept": "image/*",
+                "style": "border: 1px solid var(--primary-cyan); border-radius: 5px;",
+            }
+        ),
+        label="Student ID Card Photo",
+        help_text="Please upload a clear copy/scan of your Student ID card (required for students).",
     )
 
     class Meta:
@@ -135,6 +148,7 @@ class RegistrationForm(UserCreationForm):
             "is_bars_member",
             "position_name",
             "photo",
+            "student_id_photo",
         ]
         widgets = {
             "username": forms.TextInput(
@@ -560,7 +574,7 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ["user_type", "student_id", "phone"]
+        fields = ["user_type", "student_id", "phone", "photo", "student_id_photo"]
         widgets = {
             "user_type": forms.Select(
                 attrs={"class": "form-select bg-dark text-light border-cyan"}
@@ -575,6 +589,18 @@ class UserProfileForm(forms.ModelForm):
                 attrs={
                     "class": "form-control bg-dark text-light border-cyan",
                     "placeholder": "Phone Number",
+                }
+            ),
+            "photo": forms.FileInput(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "accept": "image/*",
+                }
+            ),
+            "student_id_photo": forms.FileInput(
+                attrs={
+                    "class": "form-control bg-dark text-light border-cyan",
+                    "accept": "image/*",
                 }
             ),
         }

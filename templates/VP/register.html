@@ -27,8 +27,9 @@
                     <div class="row g-3">
                         {% for field in form %}
                             {% if field.name != 'password1' and field.name != 'password2' %}
-                               <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' or field.name == 'photo' %}col-12{% else %}col-md-6{% endif %}" 
+                               <div class="{% if field.name == 'user_type' or field.name == 'email' or field.name == 'username' or field.name == 'photo' or field.name == 'student_id_photo' %}col-12{% else %}col-md-6{% endif %}" 
                                  {% if field.name == 'student_id' %}id="student-id-field"{% endif %}
+                                 {% if field.name == 'student_id_photo' %}id="student-id-photo-field"{% endif %}
                                  {% if field.name == 'position_name' %}id="position-name-field"{% endif %}
                                  {% if field.name == 'is_bars_member' %}id="bars-member-field"{% endif %}>
                                 
@@ -121,16 +122,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const userTypeSelect = document.querySelector('select[name="user_type"]');
     const studentIdWrapper = document.getElementById('student-id-field');
     const studentIdInput = document.querySelector('input[name="student_id"]');
+    const studentIdPhotoWrapper = document.getElementById('student-id-photo-field');
+    const studentIdPhotoInput = document.querySelector('input[name="student_id_photo"]');
     
     function toggleStudentId() {
         if (userTypeSelect && userTypeSelect.value === 'student') {
-            studentIdWrapper.style.display = 'block';
+            if(studentIdWrapper) studentIdWrapper.style.display = 'block';
             if(studentIdInput) studentIdInput.required = true;
-        } else if (studentIdWrapper) {
-            studentIdWrapper.style.display = 'none';
-            if(studentIdInput) {
-                studentIdInput.required = false;
-                studentIdInput.value = '';
+            if(studentIdPhotoWrapper) studentIdPhotoWrapper.style.display = 'block';
+            if(studentIdPhotoInput) studentIdPhotoInput.required = true;
+        } else {
+            if (studentIdWrapper) {
+                studentIdWrapper.style.display = 'none';
+                if(studentIdInput) {
+                    studentIdInput.required = false;
+                    studentIdInput.value = '';
+                }
+            }
+            if (studentIdPhotoWrapper) {
+                studentIdPhotoWrapper.style.display = 'none';
+                if(studentIdPhotoInput) {
+                    studentIdPhotoInput.required = false;
+                    studentIdPhotoInput.value = '';
+                }
             }
         }
     }

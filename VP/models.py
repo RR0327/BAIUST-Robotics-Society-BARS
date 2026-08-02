@@ -466,6 +466,7 @@ class UserProfile(models.Model):
         null=True,
     )
     photo = models.ImageField(upload_to="users/photos/", null=True, blank=True)
+    student_id_photo = models.ImageField(upload_to="users/id_cards/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

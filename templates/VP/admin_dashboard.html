@@ -71,18 +71,18 @@
                         <form method="GET" action="{% url 'export_data' %}" target="_blank">
                             <div class="row">
                                 <!-- Resource Choice -->
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-6 col-lg-3 mb-3">
                                     <span class="help-text d-block mb-1" style="font-size: 0.75rem;">1. SELECT RESOURCE</span>
                                     <select name="resource" id="export-resource" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
                                         <option value="members" selected>Personnel Roster (Members)</option>
                                         <option value="events">Operations (Events)</option>
                                         <option value="registrations">User Registrations</option>
-                                        <option value="event_registrations">Event Attendee List (Event Registrations)</option>
+                                        <option value="event_registrations">Event Attendee List</option>
                                     </select>
                                 </div>
                                 
                                 <!-- Panel Filter Choice -->
-                                <div class="col-md-4 mb-3" id="export-panel-wrapper">
+                                <div class="col-md-6 col-lg-3 mb-3" id="export-panel-wrapper">
                                     <span class="help-text d-block mb-1" style="font-size: 0.75rem;">2. FILTER BY PANEL</span>
                                     <select name="panel" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
                                         <option value="" selected>All Panels</option>
@@ -93,18 +93,26 @@
                                 </div>
 
                                 <!-- Event Filter Choice -->
-                                <div class="col-md-4 mb-3" id="export-event-wrapper" style="display: none;">
+                                <div class="col-md-6 col-lg-3 mb-3" id="export-event-wrapper" style="display: none;">
                                     <span class="help-text d-block mb-1" style="font-size: 0.75rem;">2. FILTER BY EVENT</span>
-                                    <select name="event" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
+                                    <select name="event" id="export-event-select" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
                                         <option value="" selected>All Events</option>
                                         {% for event in events %}
-                                        <option value="{{ event.id }}">{{ event.title }} ({{ event.status }})</option>
+                                        <option value="{{ event.id }}" data-segments="{{ event.segment_list|join:',' }}">{{ event.title }} ({{ event.status }})</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 
+                                <!-- Segment Filter Choice -->
+                                <div class="col-md-6 col-lg-3 mb-3" id="export-segment-wrapper" style="display: none;">
+                                    <span class="help-text d-block mb-1" style="font-size: 0.75rem;">2A. FILTER BY SEGMENT</span>
+                                    <select name="segment" id="export-segment-select" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
+                                        <option value="" selected>All Segments</option>
+                                    </select>
+                                </div>
+                                
                                 <!-- Format Choice -->
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-6 col-lg-3 mb-3">
                                     <span class="help-text d-block mb-1" style="font-size: 0.75rem;">3. SELECT FORMAT</span>
                                     <select name="format" class="form-select bg-dark text-light border-cyan" style="font-size: 0.8rem;">
                                         <option value="csv" selected>CSV (Spreadsheet)</option>
@@ -227,13 +235,18 @@
                             {% for reg in event_registrations %}
                             <tr>
                                 <td>
-                                    {% if reg.serial_no %}
-                                        <span class="text-cyan fw-bold">#{{ reg.serial_no }}</span>
+                                    {% if reg.display_serial %}
+                                        <span class="text-cyan fw-bold">#{{ reg.display_serial }}</span>
                                     {% else %}
                                         <span class="text-white-50">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-white fw-bold">{{ reg.event.title }}</td>
+                                <td class="text-white fw-bold">
+                                    {{ reg.event.title }}
+                                    {% if reg.segment %}
+                                        <small class="d-block text-cyan mt-1" style="font-size: 0.75rem;">[{{ reg.segment }}]</small>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <div class="text-light">{{ reg.name|default:reg.user.username }}</div>
                                     <small class="help-text">ID: {{ reg.student_id|default:"N/A" }}</small>
@@ -286,6 +299,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportResource = document.getElementById('export-resource');
     const exportPanelWrapper = document.getElementById('export-panel-wrapper');
     const exportEventWrapper = document.getElementById('export-event-wrapper');
+    const exportEventSelect = document.getElementById('export-event-select');
+    const exportSegmentWrapper = document.getElementById('export-segment-wrapper');
+    const exportSegmentSelect = document.getElementById('export-segment-select');
     
     if (exportResource) {
         function toggleSelectors() {
@@ -293,16 +309,49 @@ document.addEventListener('DOMContentLoaded', function() {
             if (val === 'event_registrations') {
                 if (exportPanelWrapper) exportPanelWrapper.style.display = 'none';
                 if (exportEventWrapper) exportEventWrapper.style.display = 'block';
+                updateSegments();
             } else if (val === 'events') {
                 if (exportPanelWrapper) exportPanelWrapper.style.display = 'none';
                 if (exportEventWrapper) exportEventWrapper.style.display = 'none';
+                if (exportSegmentWrapper) exportSegmentWrapper.style.display = 'none';
             } else {
                 // members, registrations
                 if (exportPanelWrapper) exportPanelWrapper.style.display = 'block';
                 if (exportEventWrapper) exportEventWrapper.style.display = 'none';
+                if (exportSegmentWrapper) exportSegmentWrapper.style.display = 'none';
             }
         }
+
+        function updateSegments() {
+            if (exportResource.value !== 'event_registrations') return;
+            
+            const selectedOption = exportEventSelect.options[exportEventSelect.selectedIndex];
+            const segmentsData = selectedOption.getAttribute('data-segments');
+            
+            // Clear current options
+            exportSegmentSelect.innerHTML = '<option value="" selected>All Segments</option>';
+            
+            if (segmentsData && segmentsData.trim() !== '') {
+                exportSegmentWrapper.style.display = 'block';
+                const segments = segmentsData.split(',').map(s => s.trim());
+                segments.forEach(seg => {
+                    if (seg) {
+                        const opt = document.createElement('option');
+                        opt.value = seg;
+                        opt.textContent = seg;
+                        exportSegmentSelect.appendChild(opt);
+                    }
+                });
+            } else {
+                exportSegmentWrapper.style.display = 'none';
+            }
+        }
+        
         exportResource.addEventListener('change', toggleSelectors);
+        if (exportEventSelect) {
+            exportEventSelect.addEventListener('change', updateSegments);
+        }
+        
         toggleSelectors(); // Run once on page load
     }
 });

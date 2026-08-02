@@ -220,6 +220,11 @@ def event_detail(request, event_id):
     else:
         can_register = True
 
+    current_panel = Panel.objects.order_by("-year").first()
+    eligible_members = []
+    if current_panel:
+        eligible_members = Member.objects.filter(panel=current_panel).exclude(role__in=["Executive Member", "Member", "General Member"]).order_by('order', 'name')
+
     context = {
         "event": event,
         "similar_events": similar_events,
@@ -227,6 +232,7 @@ def event_detail(request, event_id):
         "can_register": can_register,
         "is_registration_open": event.is_registration_open,
         "registered_segments": registered_segments_list,
+        "eligible_members": eligible_members,
     }
     return render(request, "VP/event_detail.html", context)
 
@@ -387,10 +393,12 @@ def user_dashboard(request):
     latest_achievements = Achievement.objects.all()[:3]
 
     registered_event_ids = set()
+    user_registrations = []
     if request.user.is_authenticated:
         registered_event_ids = set(
             request.user.event_registrations.values_list("event_id", flat=True)
         )
+        user_registrations = request.user.event_registrations.select_related("event").order_by("-registered_at")
 
     context = {
         "profile": profile,
@@ -402,6 +410,7 @@ def user_dashboard(request):
         "total_members": active_member_count,
         "panel_count": Panel.objects.count(),
         "registered_event_ids": registered_event_ids,
+        "user_registrations": user_registrations,
     }
     return render(request, "VP/user_dashboard.html", context)
 
@@ -416,7 +425,7 @@ def user_profile(request):
 
     if request.method == "POST":
         form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = UserProfileForm(request.POST, instance=profile)
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid() and profile_form.is_valid():
             form.save()
             profile_form.save()
@@ -629,12 +638,13 @@ def generate_csv_response(resource_name, queryset):
         for u in queryset:
             writer.writerow([u.user.username, u.user.get_full_name(), u.user.email, u.get_user_type_display(), u.student_id, u.phone, "Yes" if u.is_bars_member else "No", u.position_name or '', u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else ''])
     elif resource_name == "event_registrations":
-        writer.writerow(["SERIAL NO", "EVENT", "ATTENDEE NAME", "STUDENT ID", "EMAIL", "PHONE", "PAYMENT METHOD", "TRANSACTION ID / RECIPIENT", "REGISTERED AT", "STATUS"])
+        writer.writerow(["SERIAL NO", "EVENT", "SEGMENT", "ATTENDEE NAME", "STUDENT ID", "EMAIL", "PHONE", "PAYMENT METHOD", "TRANSACTION ID / RECIPIENT", "REGISTERED AT", "STATUS"])
         for reg in queryset:
             payment_info = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
             writer.writerow([
                 reg.display_serial or '',
                 reg.event.title,
+                reg.segment or '',
                 reg.name or reg.user.username,
                 reg.student_id or '',
                 reg.email or reg.user.email,
@@ -691,6 +701,7 @@ def generate_json_response(resource_name, queryset):
             data.append({
                 "serial_no": reg.display_serial,
                 "event": reg.event.title,
+                "segment": reg.segment,
                 "attendee_name": reg.name or reg.user.username,
                 "student_id": reg.student_id,
                 "email": reg.email or reg.user.email,
@@ -781,6 +792,7 @@ def generate_excel_response(resource_name, queryset):
             row_data = [
                 reg.display_serial or '',
                 reg.event.title,
+                reg.segment or '',
                 reg.name or reg.user.username,
                 reg.student_id or '',
                 reg.email or reg.user.email,
@@ -973,20 +985,20 @@ def generate_pdf_response(resource_name, queryset):
                 Paragraph("Yes" if u.is_bars_member else "No", style_cell),
             ])
     elif resource_name == "event_registrations":
-        headers = ["Sl No", "Event", "Name", "Student ID", "Phone", "Payment", "Status"]
-        col_widths = [45, 110, 100, 60, 85, 80, 60]
+        headers = ["SERIAL NO", "EVENT", "SEGMENT", "ATTENDEE", "PAYMENT", "STATUS"]
+        col_widths = [60, 100, 60, 100, 120, 60]
         table_data.append([Paragraph(h, style_header) for h in headers])
+        
         for reg in queryset:
-            payment_detail = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
-            payment_text = f"{reg.get_payment_method_display()}<br/><font size='6' color='#666666'>{payment_detail or ''}</font>"
+            payment_info = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
+            payment_str = f"<b>{reg.get_payment_method_display()}</b><br/><font size='7'>{payment_info}</font>"
             table_data.append([
                 Paragraph(str(reg.display_serial or ''), style_cell_bold),
                 Paragraph(reg.event.title, style_cell),
+                Paragraph(reg.segment or '-', style_cell),
                 Paragraph(reg.name or reg.user.username, style_cell),
-                Paragraph(reg.student_id or '', style_cell),
-                Paragraph(reg.phone or '', style_cell),
-                Paragraph(payment_text, style_cell),
-                Paragraph(reg.status, style_cell),
+                Paragraph(payment_str, style_cell),
+                Paragraph(reg.status, style_cell_bold)
             ])
             
     report_table = Table(table_data, colWidths=col_widths, repeatRows=1)
@@ -1036,6 +1048,10 @@ def export_data(request):
         queryset = EventRegistration.objects.all().select_related("event", "user").order_by("-registered_at")
         if event_id:
             queryset = queryset.filter(event_id=event_id)
+        
+        segment = request.GET.get("segment")
+        if segment:
+            queryset = queryset.filter(segment=segment)
     else:
         return HttpResponse("Invalid resource specified", status=400)
         
@@ -1260,7 +1276,7 @@ def register_event(request, event_id):
     payment_method = request.POST.get("payment_method", "hand_cash").strip()
     transaction_id = request.POST.get("transaction_id", "").strip()
     hand_cash_recipient = request.POST.get("hand_cash_recipient", "").strip()
-    photo = request.FILES.get("photo")
+    photo = request.user.userprofile.photo if hasattr(request.user, 'userprofile') else None
 
     # View-side Validations
     if not name or not student_id or not email or not phone:
@@ -1289,11 +1305,8 @@ def register_event(request, event_id):
             messages.error(request, f"Registration failed: The segment {segment} is already full.")
             return redirect("event_detail", event_id=event_id)
 
-    # For new registrations, photo is required. For re-submissions, photo is optional.
+    # For new registrations, photo is taken from profile (no validation needed here)
     is_resubmission = existing_registration and existing_registration.status == 'Rejected'
-    if not photo and not is_resubmission:
-        messages.error(request, "Registration failed: Profile photo is required.")
-        return redirect("event_detail", event_id=event_id)
 
     try:
         if is_resubmission:
