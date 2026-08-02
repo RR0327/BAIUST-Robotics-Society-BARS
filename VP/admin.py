@@ -152,7 +152,7 @@ class EventAdmin(admin.ModelAdmin):
             "fields": ("date", "end_date", "location", "status")
         }),
         ("Registration", {
-            "fields": ("registration_link", "registration_deadline", "capacity")
+            "fields": ("registration_link", "registration_deadline", "capacity", "segments_available", "segments")
         }),
         ("Metadata", {
             "fields": ("created_at",),
@@ -270,9 +270,9 @@ class GeneralMemberApplicationAdmin(admin.ModelAdmin):
 
 
 class EventRegistrationAdmin(admin.ModelAdmin):
-    list_display = ["serial_no", "user", "event", "status", "registered_at"]
-    list_filter = ["status", "event", "registered_at"]
-    search_fields = ["user__username", "user__email", "event__title"]
+    list_display = ["display_serial", "user", "event", "segment", "status", "registered_at"]
+    list_filter = ["status", "event", "segment", "registered_at"]
+    search_fields = ["user__username", "user__email", "event__title", "segment"]
     ordering = ["-registered_at"]
 
 

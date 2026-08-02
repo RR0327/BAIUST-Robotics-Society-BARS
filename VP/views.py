@@ -198,26 +198,35 @@ def event_detail(request, event_id):
         .order_by("-date")[:3]
     )
 
-    is_registered = False
-    registration = None
+    user_registrations = []
+    can_register = False
+    registered_segments_list = []
     if request.user.is_authenticated:
-        registration = EventRegistration.objects.filter(user=request.user, event=event).first()
-        if registration:
-            if registration.status == 'Rejected':
-                is_registered = False
-            else:
-                is_registered = True
-                # Retrofit QR code on load if it's missing (e.g. for existing registrations)
-                if registration.status == 'Approved' and not registration.qr_code:
-                    registration.generate_qr_code()
-                    registration.refresh_from_db()
+        user_registrations = list(EventRegistration.objects.filter(user=request.user, event=event).order_by('-registered_at'))
+        
+        for reg in user_registrations:
+            if reg.status == 'Approved' and not reg.qr_code:
+                reg.generate_qr_code()
+                reg.refresh_from_db()
+                
+        if event.segments_available:
+            registered_segments = set(reg.segment for reg in user_registrations if reg.status in ['Pending', 'Approved'])
+            registered_segments_list = list(registered_segments)
+            available_segments = set(d['name'] for d in event.segment_details)
+            can_register = len(available_segments - registered_segments) > 0
+        else:
+            has_active = any(reg.status in ['Pending', 'Approved'] for reg in user_registrations)
+            can_register = not has_active
+    else:
+        can_register = True
 
     context = {
         "event": event,
         "similar_events": similar_events,
-        "is_registered": is_registered,
-        "registration": registration,
+        "user_registrations": user_registrations,
+        "can_register": can_register,
         "is_registration_open": event.is_registration_open,
+        "registered_segments": registered_segments_list,
     }
     return render(request, "VP/event_detail.html", context)
 
@@ -624,7 +633,7 @@ def generate_csv_response(resource_name, queryset):
         for reg in queryset:
             payment_info = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
             writer.writerow([
-                reg.serial_no or '',
+                reg.display_serial or '',
                 reg.event.title,
                 reg.name or reg.user.username,
                 reg.student_id or '',
@@ -680,7 +689,7 @@ def generate_json_response(resource_name, queryset):
     elif resource_name == "event_registrations":
         for reg in queryset:
             data.append({
-                "serial_no": reg.serial_no,
+                "serial_no": reg.display_serial,
                 "event": reg.event.title,
                 "attendee_name": reg.name or reg.user.username,
                 "student_id": reg.student_id,
@@ -770,7 +779,7 @@ def generate_excel_response(resource_name, queryset):
         for reg in queryset:
             payment_info = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
             row_data = [
-                reg.serial_no or '',
+                reg.display_serial or '',
                 reg.event.title,
                 reg.name or reg.user.username,
                 reg.student_id or '',
@@ -971,7 +980,7 @@ def generate_pdf_response(resource_name, queryset):
             payment_detail = reg.transaction_id if reg.payment_method == 'bkash' else reg.hand_cash_recipient
             payment_text = f"{reg.get_payment_method_display()}<br/><font size='6' color='#666666'>{payment_detail or ''}</font>"
             table_data.append([
-                Paragraph(str(reg.serial_no or ''), style_cell_bold),
+                Paragraph(str(reg.display_serial or ''), style_cell_bold),
                 Paragraph(reg.event.title, style_cell),
                 Paragraph(reg.name or reg.user.username, style_cell),
                 Paragraph(reg.student_id or '', style_cell),
@@ -1106,8 +1115,12 @@ def generate_ticket_pdf(registration):
         [Paragraph("ATTENDEE", style_label), Paragraph("PHONE NUMBER", style_label)],
         [Paragraph(registration.name or registration.user.username, style_value), Paragraph(registration.phone or "N/A", style_value)],
         [Paragraph("SERIAL NO", style_label), Paragraph("DATE & TIME", style_label)],
-        [Paragraph(f"#{registration.serial_no}", style_serial), Paragraph(registration.event.date.strftime('%Y-%m-%d %H:%M'), style_value)]
+        [Paragraph(f"#{registration.display_serial}", style_serial), Paragraph(registration.event.date.strftime('%Y-%m-%d %H:%M'), style_value)]
     ]
+    
+    if registration.event.segments_available and registration.segment:
+        info_data.append([Paragraph("SEGMENT", style_label), Paragraph("", style_label)])
+        info_data.append([Paragraph(registration.segment, style_value), Paragraph("", style_value)])
     info_table = Table(info_data, colWidths=[130, 130])
     info_table.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -1216,20 +1229,27 @@ def register_event(request, event_id):
         from django.utils import timezone
         if event.status != "Upcoming" or timezone.now() >= event.date:
             messages.error(request, "Registration is closed because this event is already running or completed.")
+        elif event.segments_available:
+            messages.error(request, "Registration failed: All available segments for this event are full.")
         elif event.capacity is not None and event.registration_count >= event.capacity:
             messages.error(request, "Registration failed: This event is already full.")
         else:
             messages.error(request, "Registration is closed for this event.")
         return redirect("event_detail", event_id=event_id)
         
-    # Check if already registered
-    existing_registration = EventRegistration.objects.filter(user=request.user, event=event).first()
+    segment = request.POST.get("segment", "").strip()
+    
+    if event.segments_available:
+        existing_registration = EventRegistration.objects.filter(user=request.user, event=event, segment=segment).order_by('-registered_at').first()
+    else:
+        existing_registration = EventRegistration.objects.filter(user=request.user, event=event).order_by('-registered_at').first()
+        
     if existing_registration:
         if existing_registration.status == 'Pending':
             messages.warning(request, "Your registration is pending approval.")
             return redirect("event_detail", event_id=event_id)
         elif existing_registration.status == 'Approved':
-            messages.warning(request, "You are already registered for this event.")
+            messages.warning(request, "You are already registered for this event/segment.")
             return redirect("event_detail", event_id=event_id)
         
     # Register the user
@@ -1255,6 +1275,20 @@ def register_event(request, event_id):
         messages.error(request, "Registration failed: Hand cash recipient is required.")
         return redirect("event_detail", event_id=event_id)
 
+    if event.segments_available:
+        if not segment:
+            messages.error(request, "Registration failed: Please select a segment.")
+            return redirect("event_detail", event_id=event_id)
+            
+        segment_detail = next((d for d in event.segment_details if d['name'] == segment), None)
+        if not segment_detail:
+            messages.error(request, "Registration failed: Invalid segment selected.")
+            return redirect("event_detail", event_id=event_id)
+            
+        if segment_detail['is_full']:
+            messages.error(request, f"Registration failed: The segment {segment} is already full.")
+            return redirect("event_detail", event_id=event_id)
+
     # For new registrations, photo is required. For re-submissions, photo is optional.
     is_resubmission = existing_registration and existing_registration.status == 'Rejected'
     if not photo and not is_resubmission:
@@ -1271,6 +1305,7 @@ def register_event(request, event_id):
             existing_registration.payment_method = payment_method
             existing_registration.transaction_id = transaction_id if payment_method == "bkash" else None
             existing_registration.hand_cash_recipient = hand_cash_recipient if payment_method == "hand_cash" else None
+            existing_registration.segment = segment if event.segments_available else None
             if photo:
                 existing_registration.photo = photo
             existing_registration.status = 'Approved'
@@ -1290,6 +1325,7 @@ def register_event(request, event_id):
                 payment_method=payment_method,
                 transaction_id=transaction_id if payment_method == "bkash" else None,
                 hand_cash_recipient=hand_cash_recipient if payment_method == "hand_cash" else None,
+                segment=segment if event.segments_available else None,
                 photo=photo,
                 status='Approved'
             )

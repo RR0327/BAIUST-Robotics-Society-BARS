@@ -143,6 +143,8 @@ class Event(models.Model):
     registration_link = models.URLField(blank=True)
     registration_deadline = models.DateTimeField(null=True, blank=True)
     capacity = models.PositiveIntegerField(null=True, blank=True, help_text="Leave blank or set to null for unlimited seats.")
+    segments_available = models.BooleanField(default=False, verbose_name="Segment available")
+    segments = models.TextField(blank=True, help_text="Enter segments separated by commas (e.g. LFR:50, RoboSoccer:30). If a segment has unlimited seats, just write the name (e.g. LFR). Only applicable if segments are available.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -160,8 +162,22 @@ class Event(models.Model):
             return False
         if self.registration_deadline and timezone.now() > self.registration_deadline:
             return False
-        if self.capacity is not None and self.registration_count >= self.capacity:
-            return False
+            
+        if self.segments_available:
+            details = self.segment_details
+            if not details:
+                return True
+            
+            any_open = False
+            for d in details:
+                if not d['is_full']:
+                    any_open = True
+                    break
+            if not any_open:
+                return False
+        else:
+            if self.capacity is not None and self.registration_count >= self.capacity:
+                return False
         return True
 
     @property
@@ -173,6 +189,47 @@ class Event(models.Model):
         if self.capacity is None:
             return None
         return max(0, self.capacity - self.registration_count)
+
+    @property
+    def segment_details(self):
+        if not self.segments_available or not self.segments:
+            return []
+            
+        details = []
+        for s in self.segments.split(','):
+            s = s.strip()
+            if not s:
+                continue
+                
+            parts = s.split(':')
+            name = parts[0].strip()
+            capacity = None
+            if len(parts) > 1 and parts[1].strip().isdigit():
+                capacity = int(parts[1].strip())
+                
+            registered_count = self.registrations.filter(segment=name).count()
+            
+            remaining = None
+            is_full = False
+            if capacity is not None:
+                remaining = max(0, capacity - registered_count)
+                is_full = remaining == 0
+                
+            details.append({
+                'name': name,
+                'capacity': capacity,
+                'registered': registered_count,
+                'remaining': remaining,
+                'is_full': is_full
+            })
+        return details
+        
+    @property
+    def segment_list(self):
+        # Kept for backward compatibility if needed, though we can use segment_details
+        if not self.segments_available or not self.segments:
+            return []
+        return [d['name'] for d in self.segment_details]
 
 
 class EventPhoto(models.Model):
@@ -236,14 +293,22 @@ class EventRegistration(models.Model):
     payment_method = models.CharField(max_length=20, choices=[('bkash', 'bKash'), ('hand_cash', 'Hand Cash')], default='hand_cash')
     transaction_id = models.CharField(max_length=100, null=True, blank=True)
     hand_cash_recipient = models.CharField(max_length=100, null=True, blank=True)
+    segment = models.CharField(max_length=100, blank=True, null=True)
     registered_at = models.DateTimeField(auto_now_add=True)
     qr_code = models.ImageField(upload_to="registrations/", blank=True, null=True)
     serial_no = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Approved')
 
     class Meta:
-        unique_together = ('user', 'event')
         ordering = ['-registered_at']
+
+    @property
+    def display_serial(self):
+        if not self.serial_no:
+            return None
+        if self.event.segments_available and self.segment:
+            return f"{self.segment}-{self.serial_no}"
+        return str(self.serial_no)
 
     def __str__(self):
         return f"{self.user.username} registered for {self.event.title}"
@@ -260,7 +325,7 @@ class EventRegistration(models.Model):
             except Exception:
                 pass
 
-        qr_content = f"Registration ID: {self.id} | Serial No: {self.serial_no} | User: {self.user.username} | Event: {self.event.title}"
+        qr_content = f"Registration ID: {self.id} | Serial No: {self.display_serial} | User: {self.user.username} | Event: {self.event.title}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(qr_content)
         qr.make(fit=True)
@@ -285,9 +350,14 @@ class EventRegistration(models.Model):
             
         if is_approved:
             if not was_approved or not self.serial_no:
-                max_serial = EventRegistration.objects.filter(event=self.event, status='Approved').aggregate(
-                    max_serial=models.Max('serial_no')
-                )['max_serial']
+                if self.event.segments_available and self.segment:
+                    max_serial = EventRegistration.objects.filter(event=self.event, segment=self.segment, status='Approved').aggregate(
+                        max_serial=models.Max('serial_no')
+                    )['max_serial']
+                else:
+                    max_serial = EventRegistration.objects.filter(event=self.event, status='Approved').aggregate(
+                        max_serial=models.Max('serial_no')
+                    )['max_serial']
                 self.serial_no = (max_serial or 0) + 1
         else:
             self.serial_no = None
@@ -423,3 +493,17 @@ class UserProfile(models.Model):
                 from django.contrib.auth.models import Permission
                 permissions = Permission.objects.filter(content_type__app_label='VP')
                 self.user.user_permissions.remove(*permissions)
+
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+
+@receiver(post_delete, sender=EventRegistration)
+def delete_registration_files(sender, instance, **kwargs):
+    """
+    Deletes photo and qr_code files from the filesystem
+    when the corresponding EventRegistration object is deleted.
+    """
+    if instance.photo:
+        instance.photo.delete(save=False)
+    if instance.qr_code:
+        instance.qr_code.delete(save=False)

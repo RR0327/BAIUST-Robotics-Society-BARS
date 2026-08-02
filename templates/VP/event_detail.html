@@ -205,108 +205,130 @@
                                         </li>
                                         <li class="mb-3">
                                             <small class="help-text d-block">AVAILABLE SEATS</small>
-                                            <span class="text-white">
-                                                {% if event.capacity %}
-                                                {% if event.remaining_seats > 0 %}
-                                                {{ event.remaining_seats }} / {{ event.capacity }} remaining
-                                                {% else %}
-                                                <span class="text-danger fw-bold"><i
-                                                        class="bi bi-exclamation-triangle-fill"></i> FULL (0
-                                                    remaining)</span>
-                                                {% endif %}
-                                                {% else %}
-                                                Unlimited
-                                                {% endif %}
-                                            </span>
+                                            {% if event.segments_available %}
+                                                <ul class="text-white list-unstyled ms-2 mt-1 mb-0" style="font-size: 0.85rem;">
+                                                {% for seg in event.segment_details %}
+                                                    <li class="mb-1">
+                                                        <i class="bi bi-arrow-right-short text-cyan"></i> <strong>{{ seg.name }}</strong>: 
+                                                        {% if seg.capacity %}
+                                                            {% if seg.is_full %}
+                                                                <span class="text-danger fw-bold ms-1">FULL</span>
+                                                            {% else %}
+                                                                <span class="text-white ms-1">{{ seg.remaining }} / {{ seg.capacity }} remaining</span>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <span class="text-white ms-1">Unlimited</span>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <span class="text-white">
+                                                    {% if event.capacity %}
+                                                    {% if event.remaining_seats > 0 %}
+                                                    {{ event.remaining_seats }} / {{ event.capacity }} remaining
+                                                    {% else %}
+                                                    <span class="text-danger fw-bold"><i
+                                                            class="bi bi-exclamation-triangle-fill"></i> FULL (0
+                                                        remaining)</span>
+                                                    {% endif %}
+                                                    {% else %}
+                                                    Unlimited
+                                                    {% endif %}
+                                                </span>
+                                            {% endif %}
                                         </li>
                                         <li class="mt-3">
                                             {% if is_registration_open %}
                                                 {% if user.is_authenticated %}
-                                                    {% if is_registered %}
-                                                        {% if registration.status == 'Approved' %}
-                                                            <button class="btn btn-success w-100 btn-sm py-2 mb-3" disabled>
-                                                                <i class="bi bi-check-circle-fill me-1"></i>Registration Successful
-                                                            </button>
-                                                            {% if registration.qr_code %}
-                                                                <div class="cyber-ticket border rounded bg-dark-card p-3 mb-3"
-                                                                    style="background: rgba(0, 243, 255, 0.02); border: 1px dashed var(--primary-cyan) !important;">
-                                                                    <div class="row g-0 align-items-center">
-                                                                        <!-- Left Part: Ticket Details -->
-                                                                        <div class="col-8 text-start pe-2"
-                                                                            style="border-right: 1px dashed rgba(0, 243, 255, 0.3);">
-                                                                            <small class="help-text d-block mb-1 text-cyan fw-bold"
-                                                                                style="font-size: 0.6rem; letter-spacing: 0.5px;">
-                                                                                <i class="bi bi-ticket-perforated-fill me-1"></i>TICKET STUB
-                                                                            </small>
-                                                                            <h6 class="text-white fw-bold mb-2"
-                                                                                style="font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                                                                                title="{{ event.title }}">{{ event.title }}</h6>
-                                    
-                                                                            <div class="mb-1">
-                                                                                <small class="text-muted d-block"
-                                                                                    style="font-size: 0.55rem; text-transform: uppercase;">Attendee</small>
-                                                                                <span class="text-white fw-bold"
-                                                                                    style="font-size: 0.75rem;">{{ registration.name|default:user.username }}</span>
-                                                                            </div>
-                                                                            <div class="mb-1">
-                                                                                <small class="text-muted d-block"
-                                                                                    style="font-size: 0.55rem; text-transform: uppercase;">Phone</small>
-                                                                                <span class="text-white" style="font-size: 0.75rem;">{{ registration.phone|default:"N/A" }}</span>
-                                                                            </div>
-                                                                            <div>
-                                                                                <small class="text-muted d-block"
-                                                                                    style="font-size: 0.55rem; text-transform: uppercase;">Serial
-                                                                                    No</small>
-                                                                                <span class="text-cyan fw-bold"
-                                                                                    style="font-size: 0.75rem;">#{{ registration.serial_no }}</span>
-                                                                            </div>
-                                                                        </div>
-                                    
-                                                                        <!-- Right Part: QR Code -->
-                                                                        <div class="col-4 text-center ps-2">
-                                                                            <div class="qr-container bg-white p-1 d-inline-block rounded"
-                                                                                style="border: 1.5px solid var(--primary-cyan);">
-                                                                                <img src="{{ registration.qr_code.url }}"
-                                                                                    alt="Ticket QR Code"
-                                                                                    style="width: 65px; height: 65px; display: block; object-fit: contain;">
-                                                                            </div>
-                                                                            <small class="text-cyan d-block mt-1 fw-bold"
-                                                                                style="font-size: 0.55rem; letter-spacing: 0.5px;">SCAN</small>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="mt-3 pt-2 border-top border-secondary">
-                                                                         <a href="{% url 'download_ticket_pdf' registration.id %}"
-                                                                             class="btn btn-outline-cyber btn-sm w-100 py-1 no-print"
-                                                                             style="font-size: 0.7rem;">
-                                                                             <i class="bi bi-file-earmark-pdf me-1"></i>Download Ticket
-                                                                         </a>
-                                                                    </div>
-                                                                </div>
-                                                            {% endif %}
-                                                        {% else %}
-                                                            <!-- Pending Status -->
-                                                            <button class="btn btn-warning text-dark w-100 btn-sm py-2 mb-3 fw-bold" disabled style="opacity: 0.95;">
-                                                                <i class="bi bi-hourglass-split me-1"></i>Registration Pending Approval
-                                                            </button>
-                                                            <div class="alert alert-warning text-center py-2 mb-0"
-                                                                style="font-size: 0.75rem; border-color: var(--primary-orange); background: rgba(255, 107, 0, 0.05); color: #fff;">
-                                                                <i class="bi bi-info-circle-fill me-1 text-orange"></i>Your request is being reviewed. Your digital ticket stub will be generated upon approval.
-                                                            </div>
-                                                        {% endif %}
-                                                    {% else %}
+                                                    {% if can_register %}
                                                         <div class="no-print">
-                                                            {% if registration and registration.status == 'Rejected' %}
-                                                                <div class="alert alert-danger py-2 mb-3" style="font-size: 0.75rem; border-color: #ff3838; background: rgba(255, 56, 56, 0.05); color: #fff;">
-                                                                    <i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i>
-                                                                    <strong>Request Rejected:</strong> Your previous registration request was rejected by administration. You can re-submit the form below.
-                                                                </div>
-                                                            {% endif %}
-                                                            <button type="button" class="btn btn-cyber w-100 btn-sm py-2"
+                                                            <button type="button" class="btn btn-cyber w-100 btn-sm py-2 mb-3"
                                                                 data-bs-toggle="modal" data-bs-target="#registerModal">
                                                                 <i class="bi bi-plus-circle me-1"></i>REGISTER EVENT
                                                             </button>
                                                         </div>
                                                     {% endif %}
+                                                    
+                                                    {% for registration in user_registrations %}
+                                                        {% if registration.status == 'Approved' %}
+                                                            <div class="cyber-ticket border rounded bg-dark-card p-3 mb-3"
+                                                                style="background: rgba(0, 243, 255, 0.02); border: 1px dashed var(--primary-cyan) !important;">
+                                                                <div class="row g-0 align-items-center">
+                                                                    <!-- Left Part: Ticket Details -->
+                                                                    <div class="col-8 text-start pe-2"
+                                                                        style="border-right: 1px dashed rgba(0, 243, 255, 0.3);">
+                                                                        <small class="help-text d-block mb-1 text-cyan fw-bold"
+                                                                            style="font-size: 0.6rem; letter-spacing: 0.5px;">
+                                                                            <i class="bi bi-ticket-perforated-fill me-1"></i>TICKET STUB
+                                                                        </small>
+                                                                        <h6 class="text-white fw-bold mb-2"
+                                                                            style="font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                                                            title="{{ event.title }}">{{ event.title }}</h6>
+                                    
+                                                                        <div class="mb-1">
+                                                                            <small class="text-muted d-block"
+                                                                                style="font-size: 0.55rem; text-transform: uppercase;">Attendee</small>
+                                                                            <span class="text-white fw-bold"
+                                                                                style="font-size: 0.75rem;">{{ registration.name|default:user.username }}</span>
+                                                                        </div>
+                                                                        {% if event.segments_available and registration.segment %}
+                                                                        <div class="mb-1">
+                                                                            <small class="text-muted d-block"
+                                                                                style="font-size: 0.55rem; text-transform: uppercase;">Segment</small>
+                                                                            <span class="text-white fw-bold"
+                                                                                style="font-size: 0.75rem;">{{ registration.segment }}</span>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                        <div class="mb-1">
+                                                                            <small class="text-muted d-block"
+                                                                                style="font-size: 0.55rem; text-transform: uppercase;">Phone</small>
+                                                                            <span class="text-white" style="font-size: 0.75rem;">{{ registration.phone|default:"N/A" }}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <small class="text-muted d-block"
+                                                                                style="font-size: 0.55rem; text-transform: uppercase;">Serial
+                                                                                No</small>
+                                                                            <span class="text-cyan fw-bold"
+                                                                                style="font-size: 0.75rem;">#{{ registration.display_serial }}</span>
+                                                                        </div>
+                                                                    </div>
+                                    
+                                                                    <!-- Right Part: QR Code -->
+                                                                    <div class="col-4 text-center ps-2">
+                                                                        {% if registration.qr_code %}
+                                                                        <div class="qr-container bg-white p-1 d-inline-block rounded"
+                                                                            style="border: 1.5px solid var(--primary-cyan);">
+                                                                            <img src="{{ registration.qr_code.url }}"
+                                                                                alt="Ticket QR Code"
+                                                                                style="width: 65px; height: 65px; display: block; object-fit: contain;">
+                                                                        </div>
+                                                                        <small class="text-cyan d-block mt-1 fw-bold"
+                                                                            style="font-size: 0.55rem; letter-spacing: 0.5px;">SCAN</small>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mt-3 pt-2 border-top border-secondary">
+                                                                     <a href="{% url 'download_ticket_pdf' registration.id %}"
+                                                                         class="btn btn-outline-cyber btn-sm w-100 py-1 no-print"
+                                                                         style="font-size: 0.7rem;">
+                                                                         <i class="bi bi-file-earmark-pdf me-1"></i>Download Ticket
+                                                                     </a>
+                                                                </div>
+                                                            </div>
+                                                        {% elif registration.status == 'Pending' %}
+                                                            <div class="alert alert-warning text-center py-2 mb-3"
+                                                                style="font-size: 0.75rem; border-color: var(--primary-orange); background: rgba(255, 107, 0, 0.05); color: #fff;">
+                                                                <i class="bi bi-hourglass-split me-1 text-orange"></i>
+                                                                <strong>Pending {% if registration.segment %}({{ registration.segment }}){% endif %}:</strong> Your request is being reviewed.
+                                                            </div>
+                                                        {% elif registration.status == 'Rejected' %}
+                                                            <div class="alert alert-danger py-2 mb-3 no-print" style="font-size: 0.75rem; border-color: #ff3838; background: rgba(255, 56, 56, 0.05); color: #fff;">
+                                                                <i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i>
+                                                                <strong>Rejected {% if registration.segment %}({{ registration.segment }}){% endif %}:</strong> Your registration request was rejected.
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
                                                 {% else %}
                                                     <a href="{% url 'login' %}?next={{ request.path }}"
                                                         class="btn btn-outline-cyber w-100 btn-sm py-2 no-print">
@@ -423,6 +445,24 @@
                             <input type="text" class="form-control bg-dark text-light border-cyan"
                                 value="{{ event.title }}" disabled style="cursor: not-allowed; opacity: 0.8;">
                         </div>
+                        {% if event.segments_available %}
+                        <div class="col-md-12">
+                            <label class="form-label text-cyan small fw-bold">SELECT SEGMENT</label>
+                            <select name="segment" class="form-select bg-dark text-light border-cyan" required>
+                                <option value="" disabled selected>-- Select a segment --</option>
+                                {% for seg in event.segment_details %}
+                                    {% if seg.name in registered_segments %}
+                                        <option value="{{ seg.name }}" disabled>{{ seg.name }} (Already Registered)</option>
+                                    {% elif seg.is_full %}
+                                        <option value="{{ seg.name }}" disabled>{{ seg.name }} (FULL)</option>
+                                    {% else %}
+                                        <option value="{{ seg.name }}">{{ seg.name }}{% if seg.capacity %} ({{ seg.remaining }} seats left){% endif %}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-white-50" style="font-size: 0.75rem;">Choose the segment you want to participate in.</div>
+                        </div>
+                        {% endif %}
                         <div class="col-md-12">
                             <label class="form-label text-cyan small fw-bold">PROFILE PHOTO / STUDENT ID PHOTO</label>
                             <input type="file" name="photo" class="form-control bg-dark text-light border-cyan"
